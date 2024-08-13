@@ -1,3 +1,8 @@
 jupyterlab==4.2.4
 transformers==4.43.4
 torch==2.4.0
+mteb==1.7.10
+datasets==2.19.1
+llama-index-embeddings-huggingface==0.2.0
+llama-index==0.10.31
+mteb==1.7.10
