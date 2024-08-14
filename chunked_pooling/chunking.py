@@ -170,7 +170,7 @@ class Chunker:
 
         chunk_spans = []
         for i in range(0, len(token_offsets), chunk_size):
-            chunk_end = min(i + chunk_size, len(token_offsets) - 1)
+            chunk_end = min(i + chunk_size, len(token_offsets))
             if chunk_end - i > 0:
                 chunk_spans.append((i, chunk_end))
 
