@@ -32,11 +32,15 @@ def chunk_by_sentences(input_text: str, tokenizer: callable):
 def chunked_pooling(model_output: 'BatchEncoding', span_annotation: list):
     token_embeddings = model_output[0]
     outputs = []
-
     for embeddings, annotations in zip(token_embeddings, span_annotation):
+        if annotations[-1][1] > len(embeddings):
+            raise RuntimeError(
+                f'Not enough token embeddings {len(token_embeddings)} for your annotations {annotations}'
+            )
         pooled_embeddings = [
             embeddings[start:end].sum(dim=0) / (end - start)
             for start, end in annotations
+            if (end - start) >= 1
         ]
         pooled_embeddings = [
             embedding.detach().cpu().numpy() for embedding in pooled_embeddings

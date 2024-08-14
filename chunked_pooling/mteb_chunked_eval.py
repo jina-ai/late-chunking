@@ -6,6 +6,8 @@ from mteb.abstasks import AbsTask
 from mteb.evaluation.evaluators import RetrievalEvaluator
 from mteb.tasks import Retrieval
 
+from tqdm import tqdm
+
 from chunked_pooling import chunked_pooling
 from chunked_pooling.chunking import Chunker
 
@@ -76,7 +78,7 @@ class AbsTaskChunkedRetrieval(AbsTask):
         return scores
 
     def _evaluate_monolingual(
-        self, model, corpus, queries, relevant_docs, lang=None, **kwargs
+        self, model, corpus, queries, relevant_docs, lang=None, batch_size=8, **kwargs
     ):
         # split corpus into chunks
         if not self.chunked_pooling_enabled:
@@ -104,28 +106,36 @@ class AbsTaskChunkedRetrieval(AbsTask):
             ]
 
             chunk_annotations = [
-                self.chunker.chunk(
-                    text=text,
-                    tokenizer=self.tokenizer,
-                    chunking_strategy=self.chunking_strategy,
-                    chunk_size=self.chunk_size,
-                    tokenizer_opt={},
+                self._extend_special_tokens(
+                    self.chunker.chunk(
+                        text=text,
+                        tokenizer=self.tokenizer,
+                        chunking_strategy=self.chunking_strategy,
+                        chunk_size=self.chunk_size,
+                    )
                 )
                 for text in corpus_texts
             ]
 
             corpus_embs = []
-            for inputs in self._batch_inputs(
-                list(zip(corpus_texts, chunk_annotations)), batch_size=8
+            for inputs in tqdm(
+                self._batch_inputs(
+                    list(zip(corpus_texts, chunk_annotations)), batch_size=batch_size
+                ),
+                total=(len(corpus_texts) // batch_size),
             ):
                 text_inputs = [x[0] for x in inputs]
-                chunk_annotations = [x[1] for x in inputs]
+                annotations = [x[1] for x in inputs]
                 model_inputs = self.tokenizer(
                     text_inputs, return_tensors='pt', padding=True
                 )
+                if model.device.type == 'cuda':
+                    model_inputs = {
+                        k: v.to(model.device) for k, v in model_inputs.items()
+                    }
                 model_outputs = model(**model_inputs)
 
-                corpus_embs.extend(chunked_pooling(model_outputs, chunk_annotations))
+                corpus_embs.extend(chunked_pooling(model_outputs, annotations))
 
             max_chunks = max([len(x) for x in corpus_embs])
             k_values = self._calculate_k_values(max_chunks)
@@ -250,6 +260,20 @@ class AbsTaskChunkedRetrieval(AbsTask):
     def _batch_inputs(li, batch_size):
         for i in range(0, len(li), batch_size):
             yield li[i : i + batch_size]
+
+    @staticmethod
+    def _extend_special_tokens(annotations):
+        """Extends the spans because of additional special tokens, e.g. the CLS token
+        which are not considered by the chunker.
+        """
+        new_annotations = []
+        for i in range(len(annotations)):
+            left = annotations[i][0] + int(i > 0)  # move everything by one for [CLS]
+            right = (
+                annotations[i][1] + 1 + int((i + 1) == len(annotations))
+            )  # move everything by one for [CLS] and the last one for [SEP]
+            new_annotations.append((left, right))
+        return new_annotations
 
     @staticmethod
     def _prune(queries, corpus, relevant_docs, prune_size):

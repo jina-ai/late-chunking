@@ -161,19 +161,18 @@ class Chunker:
         self,
         text: str,
         chunk_size: Optional[int] = None,
-        tokenizer_opt: Optional[Dict] = None,
     ) -> List[Tuple[int, int, int]]:
-        tokenizer_opt = tokenizer_opt if tokenizer_opt is not None else {}
         chunk_size = chunk_size or self.chunk_size
         tokens = self.tokenizer.encode_plus(
-            text, return_offsets_mapping=True, **tokenizer_opt
+            text, return_offsets_mapping=True, add_special_tokens=False
         )
         token_offsets = tokens.offset_mapping
 
         chunk_spans = []
-        for i in range(1, len(token_offsets), chunk_size):
+        for i in range(0, len(token_offsets), chunk_size):
             chunk_end = min(i + chunk_size, len(token_offsets) - 1)
-            chunk_spans.append((i, chunk_end))
+            if chunk_end - i > 0:
+                chunk_spans.append((i, chunk_end))
 
         return chunk_spans
 
@@ -183,7 +182,6 @@ class Chunker:
         tokenizer: 'AutoTokenizer' = None,
         chunking_strategy: str = None,
         chunk_size: Optional[int] = None,
-        tokenizer_opt: Optional[Dict] = None,
     ):
         if chunk_size < 10:
             raise ValueError("Chunk size must be greater than 10.")
@@ -193,8 +191,6 @@ class Chunker:
         if chunking_strategy == "semantic":
             return self.chunk_semantically(text)
         elif chunking_strategy == "fixed":
-            return self.chunk_by_tokens(
-                text, chunk_size=chunk_size, tokenizer_opt=tokenizer_opt
-            )
+            return self.chunk_by_tokens(text, chunk_size=chunk_size)
         else:
             raise ValueError("Unsupported chunking strategy")
