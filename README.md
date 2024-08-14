@@ -54,3 +54,17 @@ For the other two chunks they siginificantly differ, as the traditional chunking
 While the example above illustrates the effect of the new chunking method quite well, it gives only little insides on how this method works in real-world application.
 Therefore, we want to further investigate whether it can be used to boost a model's performance on retrieval tasks, by applying when evaluating models on some of the commonly used retrieval benchmarks from [BeIR](https://github.com/beir-cellar/beir).
 
+Those retrieval tasks consists of a query set, a corpus of text documents, and a qrels file that stores information about the ids of a document that are relevant for each query.
+For determine the relevant documents of a query, one can chunk the documents, encode them into an embedding index and determine for each query embeddings the most similar chunks (kNN).
+As each chunk correspond to a document, one can convert the kNN ranking of chunks into a kNN ranking of documents (for documents occuring multiple times only the first occurence is retained).
+After that one can compare the resulting ranking with the ranking corresponding to the groundtruth qrels file and calculate retrieval metrics like nDCG@10.
+We run this evaluation for various BeIR datasets with a traditional chunking and our novel context-sensitive chunking method.
+For determine the chunks we choose a very simple method, which chunks the tests into strings of 256 tokens.
+We tested the [jina-embeddings-v2-small-en](https://huggingface.co/jinaai/jina-embeddings-v2-small-en) model. The results are shown here:
+
+| Dataset   | Traditional Chunking (nDCG@10) | Context-Sensitive Chunking (nDCG@10) |
+|-----------|--------------------------------|--------------------------------------|
+| SciFact   |                         64.20% |                               66.10% |
+| TRECCOVID |                           TODO |                                 TODO |
+
+As one can see the embeddings produced with chunked pooling outperform those produced with the traditional chunking embedding method.
