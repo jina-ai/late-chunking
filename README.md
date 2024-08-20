@@ -1,44 +1,43 @@
-# Improve Text Embeddings of Chunks with Context-Sensitive Chunking
+# Improve Text Embeddings for Long Texts with Context-Sensitive Chunking
 
-For many applications, encoding a whole text document into a single embedding representation is not desired.
-On the one hand, many applications require retrieving smaller parts of text and 
-on the other hand (TODO reference) information retrieval systems that use dense vectors often perform better when smaller parts of the documents are encoded into embedding representations because of the limited information capacity of a dense vector embedding.
+For many applications, encoding a whole text document into a single embedding representation is not useful. Many applications require retrieving smaller parts of the text and dense vector-based information retrieval systems often perform better with smaller text segments because of the limited information capacity of embedding vectors.
 
 ![img.png](img/rag.png)
 
-One of the most famous application of such a chunking approach is RAG (Retrieval Augmented Generations).
-Here a private document collections is split into smaller text chunks.
-Those text chunks are encodeed by an embedding model and stored in a vector index (e.g. a vector database).
-During runtime, a query text can also be encoded by the embedding model and used to retrieve the most relevant paragraphs from the vector index.
-The obtained paragraphs are inserted into the prompt and an LLM is used to generate an answer by taking the relevant information from the text chunks into account.
+
+RAG (Retrieval Augmented Generations) is one of the best known applications to require splitting document collections into smaller text chunks. These chunks are typically stored in a vector database with vector representations created by a text embedding model.
+At runtime, the same embedding model encodes a query text into a vector representation, which is used to identify relevant stored text chunks. These are them passed to a large language model (LLM) which synthesizes a response to the query based on the retrieved texts.
 
 ## Context Problem
 
-One challenging problem with this chunked retrieval approach is the context problem, i.e., many words as well as complex semantic references can not be effectively resolved by processing a single chunk.
-Accordingly, additional information from other parts of the document are required.
+
+This simple RAG approach is not without challenges. Long distance contextual dependencies, i.e. when the relevant information is spread over multiple chunks and taking text segments out of context makes them useless, are particularly poorly handled by this approach.
 ![img.png](img/context-problem.png)
 In the image above one can see an Wikipedia article that is split into chunks of sentences.
 One can see that phrases like "its" and "the city" referencing "Berlin" which is mentioned only in the first sentence, e.g., it is harder for the embedding model to link it to the respective entity to produce a high-quality embedding representation.
 
-## The Context-Sensitive Chunking Method
 
-To overcome this problem, we utilize the long sequence length ability of recent embedding models like [jina-embeddings-v2-base-en](https://huggingface.co/jinaai/jina-embeddings-v2-base-en).
-Compared to early text-embedding models, those models allow processing larger amounts of text at once, e.g., 8192 tokens in the case of jina-embeddings-v2-base-en (~8 pages of text).
-This allows us to process a long enough text such that it becomes less likely that this text contains references which cannot be resolved with information inside the text chunk.
-However, we still want to obtain embedding representations of smaller text chunks to address the aforementioned limitations of encoding a long text into a single representation.
+For example, if we split a Wikipedia article into sentence-length segments, as in the example above, a RAG system might not be able to answer a query like "What is the population of Berlin?" The city name and the population never appear together in a single segment, and lacking any larger document context.
+An LLM to which one of the segments is presented cannot resolve the anaphoric references like "it" or "the city".
+
+## Context-Sensitive Chunking
+
+To overcome this problem, we take advantage of the long input sequences that recent embedding models like [`jina-embeddings-v2-base-en`](https://huggingface.co/jinaai/jina-embeddings-v2-base-en) can process.
+These models support much longer input texts, for example, 8192 tokens for `jina-embeddings-v2-base-en` or roughly ten standard pages of text. Text segments of this size are much less likely to have contextual dependencies that can only be resolved with a larger context.
+However, we still need vector representations of much smaller chunks of text, in part because of the limited input sizes of LLMs but primarily because of the limited information capacity of short embedding vectors.
 
 ![img.png](img/method.png)
 
-Instead of chunking the text values before applying the model (left in the Figure), we apply the transformer of the embedding model on the whole text.
-After applying the transformer model for each input token, an output embedding representation is obtained.
-Many embedding models like jina-embeddings-v2-base-en apply a mean pooling operation of those embeddings to obtain a single text embedding.
-In the case of context-sensitive chunking, we perform the chunking on the output tokens and apply a separate mean pooling operation for each chunk.
-In this way a separate embedding representation is obtained for each chunk.
-The advantage of this method is that the output tokens are calculated by the transformer model by taking into account the surrounding tokens.
+
+The simple encoding approach (as seen on the left side of the image above) chunks texts before processing them, using sentences, paragraphs, and maximum length limits to split text _a priori_, and then applying an embedding model to the resulting chunks.
+Context-Sensitive Chunking, instead, first applies the transformer part from the embedding model to the entire text, or the largest part of it possible. This generates a sequence of vector representations for each token that encompass textual information from the entire text.
+To generate a single embedding for a text, many embedding models apply _mean pooling_ to these token representations to output a single vector. Context-Sensitive Chunking instead applies mean pooling to smaller segments of this sequence of token vectors, producing embeddings for each chunk that take into account the entire text. 
 
 ## The Effect of Context-Sensitive Chunking
 
-To illustrate the effect of context-sensitive chunking, we encode the sentences from the Wikipedia paragraph with traditional and context-sensitive chunking and calculate the cosine similarity of the resulting embeddings to the embedding of "Berlin":
+This has immediately measurable concrete effects on retrieval. As an example, in case of "the city" and "Berlin" in a Wikipedia article, the vectors representing "the city" contain information connecting it to the previous mention of "Berlin", making it a much better match for queries involving that city name.
+
+You can see that in numerical results below, which compares the embedding of the string "Berlin" to various sentences from the article about Berlin. The column "Traditional Similarity" is the similarity values using _a priori_ chunking, and "Context-Sensitive Similarity" is with context-sensitive chunking.
 
 | Text                                                                                                                                  | Similarity Traditional | Similarity Context-Sensitive  |
 |---------------------------------------------------------------------------------------------------------------------------------------|------------------------|-------------------------------|
@@ -46,25 +45,25 @@ To illustrate the effect of context-sensitive chunking, we encode the sentences 
 | Its more than 3.85 million inhabitants make it the European Union's most populous city, as measured by population within city limits. | 0.7084338              | 82489026                      |
 | The city is also one of the states of Germany, and is the third smallest state in the country in terms of area.                       | 0.7534553              | 0.84980094                    |
 
-As you can see the similarity scores for the first chunk are very close to each other.
-For the other two chunks they siginificantly differ, as the traditional chunking method produce embeddings which are much more dissimilar to the embedding of "Berlin" as it is harder for the model to relate the references to "Berlin" when processing the strings.
+As you can see the similarity scores for the first chunk that contains "Berlin" are very close to each other.
+For the other two chunks they siginificantly differ, as the context-sensitive chunking dramatically improves matching on sentences that do not explicitly use the word "Berlin" but have anaphoric references to it.
 
 ## Evaluation on Retrieval Tasks
 
-While the example above illustrates the effect of the new chunking method quite well, it gives only little insides on how this method works in real-world application.
-Therefore, we want to further investigate whether it can be used to boost a model's performance on retrieval tasks, by applying when evaluating models on some of the commonly used retrieval benchmarks from [BeIR](https://github.com/beir-cellar/beir).
 
-Those retrieval tasks consists of a query set, a corpus of text documents, and a qrels file that stores information about the ids of a document that are relevant for each query.
-For determine the relevant documents of a query, one can chunk the documents, encode them into an embedding index and determine for each query embeddings the most similar chunks (kNN).
-As each chunk correspond to a document, one can convert the kNN ranking of chunks into a kNN ranking of documents (for documents occuring multiple times only the first occurence is retained).
-After that one can compare the resulting ranking with the ranking corresponding to the groundtruth qrels file and calculate retrieval metrics like nDCG@10.
-We run this evaluation for various BeIR datasets with a traditional chunking and our novel context-sensitive chunking method.
-For determine the chunks we choose a very simple method, which chunks the tests into strings of 256 tokens.
-We tested the [jina-embeddings-v2-small-en](https://huggingface.co/jinaai/jina-embeddings-v2-small-en) model. The results are shown here:
+To verify the effectiveness of this approach beyond a few toy examples, we tested it with some of the retrieval benchmarks from [BeIR](https://github.com/beir-cellar/beir).
+Those retrieval tasks consist of a query set, a corpus of text documents, and a QRels file that stores information about the IDs of documents that are relevant for each query.
+To identify the relevant documents of a query, one can chunk the documents, encode them into an embedding index, and determine for each query embedding the most similar chunks (kNN).
+As each chunk corresponds to a document, one can convert the kNN ranking of chunks into a kNN ranking of documents (for documents occurring multiple times in the ranking, only the first occurrence is retained).
+After that, one can compare the resulting ranking with the ranking corresponding to the ground-truth QRels file and calculate retrieval metrics like nDCG@10.
+We run this evaluation for various BeIR datasets with traditional chunking and our novel context-sensitive chunking method.
+To split texts into chunks, we choose a straightforward method, which chunks the tests into strings of 256 tokens.
+Both the traditional and context-sensitive tests used the [jina-embeddings-v2-small-en](https://huggingface.co/jinaai/jina-embeddings-v2-small-en) model.
 
 | Dataset   | Traditional Chunking (nDCG@10) | Context-Sensitive Chunking (nDCG@10) |
 |-----------|--------------------------------|--------------------------------------|
 | SciFact   |                         64.20% |                               66.10% |
 | TRECCOVID |                           TODO |                                 TODO |
 
-As one can see the embeddings produced with chunked pooling outperform those produced with the traditional chunking embedding method.
+In (all|most|some) cases, context-sensitive chunking improved the score.
+
