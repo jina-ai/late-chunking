@@ -2,10 +2,10 @@ import logging
 from typing import Any, Optional
 
 import numpy as np
+import torch
 from mteb.abstasks import AbsTask
 from mteb.evaluation.evaluators import RetrievalEvaluator
 from mteb.tasks import Retrieval
-
 from tqdm import tqdm
 
 from chunked_pooling import chunked_pooling
@@ -78,7 +78,7 @@ class AbsTaskChunkedRetrieval(AbsTask):
         return scores
 
     def _evaluate_monolingual(
-        self, model, corpus, queries, relevant_docs, lang=None, batch_size=8, **kwargs
+        self, model, corpus, queries, relevant_docs, lang=None, batch_size=1, **kwargs
     ):
         # split corpus into chunks
         if not self.chunked_pooling_enabled:
@@ -118,24 +118,32 @@ class AbsTaskChunkedRetrieval(AbsTask):
             ]
 
             corpus_embs = []
-            for inputs in tqdm(
-                self._batch_inputs(
-                    list(zip(corpus_texts, chunk_annotations)), batch_size=batch_size
-                ),
-                total=(len(corpus_texts) // batch_size),
-            ):
-                text_inputs = [x[0] for x in inputs]
-                annotations = [x[1] for x in inputs]
-                model_inputs = self.tokenizer(
-                    text_inputs, return_tensors='pt', padding=True
-                )
-                if model.device.type == 'cuda':
-                    model_inputs = {
-                        k: v.to(model.device) for k, v in model_inputs.items()
-                    }
-                model_outputs = model(**model_inputs)
-
-                corpus_embs.extend(chunked_pooling(model_outputs, annotations))
+            with torch.no_grad():
+                for inputs in tqdm(
+                    self._batch_inputs(
+                        list(zip(corpus_texts, chunk_annotations)),
+                        batch_size=batch_size,
+                    ),
+                    total=(len(corpus_texts) // batch_size),
+                ):
+                    text_inputs = [x[0] for x in inputs]
+                    annotations = [x[1] for x in inputs]
+                    model_inputs = self.tokenizer(
+                        text_inputs,
+                        return_tensors='pt',
+                        padding=True,
+                        truncation=True,
+                        max_length=8192,
+                    )
+                    if model.device.type == 'cuda':
+                        model_inputs = {
+                            k: v.to(model.device) for k, v in model_inputs.items()
+                        }
+                    model_outputs = model(**model_inputs)
+                    output_embs = chunked_pooling(
+                        model_outputs, annotations, max_length=8192
+                    )
+                    corpus_embs.extend(output_embs)
 
             max_chunks = max([len(x) for x in corpus_embs])
             k_values = self._calculate_k_values(max_chunks)

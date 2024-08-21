@@ -78,6 +78,108 @@ class NarrativeQAChunked(AbsTaskChunkedRetrieval):
         super().__init__(**kwargs)
 
 
+class NFCorpusChunked(AbsTaskChunkedRetrieval):
+    metadata = TaskMetadata(
+        name="NFCorpusChunked",
+        dataset={
+            "path": "mteb/nfcorpus",
+            "revision": "ec0fa4fe99da2ff19ca1214b7966684033a58814",
+            'name': 'NFCorpus',
+        },
+        description="NFCorpus: A Full-Text Learning to Rank Dataset for Medical Information Retrieval",
+        reference="https://www.cl.uni-heidelberg.de/statnlpgroup/nfcorpus/",
+        type="Retrieval",
+        category="s2p",
+        eval_splits=["test"],
+        eval_langs=["eng-Latn"],
+        main_score="ndcg_at_10",
+        date=None,
+        form=None,
+        domains=None,
+        task_subtypes=None,
+        license=None,
+        socioeconomic_status=None,
+        annotations_creators=None,
+        dialect=None,
+        text_creation=None,
+        bibtex_citation=None,
+        n_samples=None,
+        avg_character_length=None,
+    )
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class QuoraChunked(AbsTaskChunkedRetrieval):
+    metadata = TaskMetadata(
+        name="QuoraChunked",
+        dataset={
+            "path": "mteb/quora",
+            "revision": "e4e08e0b7dbe3c8700f0daef558ff32256715259",
+            "name": "QuoraRetrieval",
+        },
+        description=(
+            "QuoraRetrieval is based on questions that are marked as duplicates on the Quora platform. Given a"
+            " question, find other (duplicate) questions."
+        ),
+        reference="https://quoradata.quora.com/First-Quora-Dataset-Release-Question-Pairs",
+        type="Retrieval",
+        category="s2s",
+        eval_splits=["dev", "test"],
+        eval_langs=["eng-Latn"],
+        main_score="ndcg_at_10",
+        date=None,
+        form=None,
+        domains=None,
+        task_subtypes=None,
+        license=None,
+        socioeconomic_status=None,
+        annotations_creators=None,
+        dialect=None,
+        text_creation=None,
+        bibtex_citation=None,
+        n_samples=None,
+        avg_character_length=None,
+    )
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class FiQA2018Chunked(AbsTaskChunkedRetrieval):
+    metadata = TaskMetadata(
+        name="FiQA2018Chunked",
+        description="Financial Opinion Mining and Question Answering",
+        reference="https://sites.google.com/view/fiqa/",
+        dataset={
+            "path": "mteb/fiqa",
+            "revision": "27a168819829fe9bcd655c2df245fb19452e8e06",
+            'name': 'FiQA2018',
+        },
+        type="Retrieval",
+        category="s2p",
+        eval_splits=["train", "dev", "test"],
+        eval_langs=["eng-Latn"],
+        main_score="ndcg_at_10",
+        date=None,
+        form=None,
+        domains=None,
+        task_subtypes=None,
+        license=None,
+        socioeconomic_status=None,
+        annotations_creators=None,
+        dialect=None,
+        text_creation=None,
+        bibtex_citation=None,
+        n_samples=None,
+        avg_character_length=None,
+    )
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
 class TRECCOVIDChunked(AbsTaskChunkedRetrieval):
     metadata = TaskMetadata(
         name='TRECCOVIDChunked',

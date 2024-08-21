@@ -60,10 +60,13 @@ We run this evaluation for various BeIR datasets with traditional chunking and o
 To split texts into chunks, we choose a straightforward method, which chunks the tests into strings of 256 tokens.
 Both the traditional and context-sensitive tests used the [jina-embeddings-v2-small-en](https://huggingface.co/jinaai/jina-embeddings-v2-small-en) model.
 
-| Dataset   | Traditional Chunking (nDCG@10) | Context-Sensitive Chunking (nDCG@10) |
-|-----------|--------------------------------|--------------------------------------|
-| SciFact   |                         64.20% |                               66.10% |
-| TRECCOVID |                           TODO |                                 TODO |
+| Dataset   | AVG Document Length (characters) | Traditional Chunking (nDCG@10) | Context-Sensitive Chunking (nDCG@10) | No Chunking |
+|-----------|----------------------------------|--------------------------------|--------------------------------------|-------------|
+| SciFact   |                           1498.4 |                         64.20% |                           **66.10%** |      63.89% |
+| TRECCOVID |                           1116.7 |                         63.36% |                               64.70% |  **65.18%** |
+| FiQA2018  |                            767.2 |                         33.25% |                           **33.84%** |      33.43% |
+| NFCorpus  |                           1589.8 |                         23.46% |                               29.98% |  **30.40%** |
+| Quora     |                             62.2 |                         87.19% |                               87.19% |      87.19% |
 
-In (all|most|some) cases, context-sensitive chunking improved the score.
+In all cases, context-sensitive chunking improved the score. In some cases, it also outperforms encoding the whole document into a single embedding, while for other datasets, no chunking performs best. However, this only makes sense if one does not need to rank chunks. One can also see that the average length of the documents correlates with greater improvement in the nDCG scores through context-sensitive chunking.
 
