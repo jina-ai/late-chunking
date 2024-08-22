@@ -76,3 +76,8 @@ To reporoduce the evaluation, you can run the following script for the tasks "Sc
 python3 test_chunked_eval.py {TASK_NAME}
 ```
 
+## Acknowledgement and References
+
+Thanks to Isabelle Mohr([@violenil](https://github.com/violenil)) for contributing some code and Scott Martens ([@scott-martens](https://github.com/scott-martens)) for reviewing the README.
+
+More about the Evaluation tasks can be found in the [MTEB Repository](https://github.com/embeddings-benchmark/mteb) and details about the training of the models for long input text in our paper: ["Jina embeddings 2: 8192-token general-purpose text embeddings for long documents."](https://arxiv.org/abs/2310.19923)
