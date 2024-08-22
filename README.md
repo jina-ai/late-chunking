@@ -1,4 +1,4 @@
-# Improve Text Embeddings for Long Texts with Context-Sensitive Chunking
+# Late Chunking of Short Chunks in Long-Context Embedding Models
 
 For many applications, encoding a whole text document into a single embedding representation is not useful. Many applications require retrieving smaller parts of the text and dense vector-based information retrieval systems often perform better with smaller text segments because of the limited information capacity of embedding vectors.
 
@@ -30,23 +30,23 @@ However, we still need vector representations of much smaller chunks of text, in
 
 
 The simple encoding approach (as seen on the left side of the image above) chunks texts before processing them, using sentences, paragraphs, and maximum length limits to split text _a priori_, and then applying an embedding model to the resulting chunks.
-Context-Sensitive Chunking, instead, first applies the transformer part from the embedding model to the entire text, or the largest part of it possible. This generates a sequence of vector representations for each token that encompass textual information from the entire text.
-To generate a single embedding for a text, many embedding models apply _mean pooling_ to these token representations to output a single vector. Context-Sensitive Chunking instead applies mean pooling to smaller segments of this sequence of token vectors, producing embeddings for each chunk that take into account the entire text. 
+Late Chunking, instead, first applies the transformer part from the embedding model to the entire text, or the largest part of it possible. This generates a sequence of vector representations for each token that encompass textual information from the entire text.
+To generate a single embedding for a text, many embedding models apply _mean pooling_ to these token representations to output a single vector. Late Chunking instead applies mean pooling to smaller segments of this sequence of token vectors, producing embeddings for each chunk that take into account the entire text. 
 
 ## The Effect of Context-Sensitive Chunking
 
 This has immediately measurable concrete effects on retrieval. As an example, in case of "the city" and "Berlin" in a Wikipedia article, the vectors representing "the city" contain information connecting it to the previous mention of "Berlin", making it a much better match for queries involving that city name.
 
-You can see that in numerical results below, which compares the embedding of the string "Berlin" to various sentences from the article about Berlin. The column "Traditional Similarity" is the similarity values using _a priori_ chunking, and "Context-Sensitive Similarity" is with context-sensitive chunking.
+You can see that in numerical results below, which compares the embedding of the string "Berlin" to various sentences from the article about Berlin. The column "Traditional Similarity" is the similarity values using _a priori_ chunking, and "Late Chunking Similarity" is with context-sensitive chunking.
 
-| Text                                                                                                                                  | Similarity Traditional | Similarity Context-Sensitive  |
+| Text                                                                                                                                  | Similarity Traditional | Similarity Late Chunking  |
 |---------------------------------------------------------------------------------------------------------------------------------------|------------------------|-------------------------------|
 | Berlin is the capital and largest city of Germany, both by area and by population."                                                   | 0.84862185             | 0.849546                      | 
 | Its more than 3.85 million inhabitants make it the European Union's most populous city, as measured by population within city limits. | 0.7084338              | 0.82489026                      |
 | The city is also one of the states of Germany, and is the third smallest state in the country in terms of area.                       | 0.7534553              | 0.84980094                    |
 
 As you can see the similarity scores for the first chunk that contains "Berlin" are very close to each other.
-For the other two chunks they siginificantly differ, as the context-sensitive chunking dramatically improves matching on sentences that do not explicitly use the word "Berlin" but have anaphoric references to it.
+For the other two chunks they siginificantly differ, as the late chunking dramatically improves matching on sentences that do not explicitly use the word "Berlin" but have anaphoric references to it.
 
 ## Evaluation on Retrieval Tasks
 
@@ -56,11 +56,11 @@ Those retrieval tasks consist of a query set, a corpus of text documents, and a 
 To identify the relevant documents of a query, one can chunk the documents, encode them into an embedding index, and determine for each query embedding the most similar chunks (kNN).
 As each chunk corresponds to a document, one can convert the kNN ranking of chunks into a kNN ranking of documents (for documents occurring multiple times in the ranking, only the first occurrence is retained).
 After that, one can compare the resulting ranking with the ranking corresponding to the ground-truth QRels file and calculate retrieval metrics like nDCG@10.
-We run this evaluation for various BeIR datasets with traditional chunking and our novel context-sensitive chunking method.
+We run this evaluation for various BeIR datasets with traditional chunking and our novel late chunking method.
 To split texts into chunks, we choose a straightforward method, which chunks the tests into strings of 256 tokens.
-Both the traditional and context-sensitive tests used the [jina-embeddings-v2-small-en](https://huggingface.co/jinaai/jina-embeddings-v2-small-en) model.
+Both the traditional and late chunking tests used the [jina-embeddings-v2-small-en](https://huggingface.co/jinaai/jina-embeddings-v2-small-en) model.
 
-| Dataset   | AVG Document Length (characters) | Traditional Chunking (nDCG@10) | Context-Sensitive Chunking (nDCG@10) | No Chunking (nDCG@10) |
+| Dataset   | AVG Document Length (characters) | Traditional Chunking (nDCG@10) | Late Chunking (nDCG@10) | No Chunking (nDCG@10) |
 |-----------|----------------------------------|--------------------------------|--------------------------------------|-----------------------|
 | SciFact   |                           1498.4 |                         64.20% |                           **66.10%** |                63.89% |
 | TRECCOVID |                           1116.7 |                         63.36% |                               64.70% |            **65.18%** |
@@ -68,7 +68,7 @@ Both the traditional and context-sensitive tests used the [jina-embeddings-v2-sm
 | NFCorpus  |                           1589.8 |                         23.46% |                               29.98% |            **30.40%** |
 | Quora     |                             62.2 |                         87.19% |                               87.19% |                87.19% |
 
-In all cases, context-sensitive chunking improved the score. In some cases, it also outperforms encoding the whole document into a single embedding, while for other datasets, no chunking performs best. However, this only makes sense if one does not need to rank chunks. One can also see that the average length of the documents correlates with greater improvement in the nDCG scores through context-sensitive chunking.
+In all cases, late chunking improved the score. In some cases, it also outperforms encoding the whole document into a single embedding, while for other datasets, no chunking performs best. However, this only makes sense if one does not need to rank chunks. One can also see that the average length of the documents correlates with greater improvement in the nDCG scores through late chunking.
 
 To reporoduce the evaluation, you can run the following script for the tasks "SciFactChunked", "TRECCOVIDChunked", "FiQA2018Chunked", "NFCorpusChunked", and "QuoraChunked":
 
