@@ -42,7 +42,7 @@ You can see that in numerical results below, which compares the embedding of the
 | Text                                                                                                                                  | Similarity Traditional | Similarity Context-Sensitive  |
 |---------------------------------------------------------------------------------------------------------------------------------------|------------------------|-------------------------------|
 | Berlin is the capital and largest city of Germany, both by area and by population."                                                   | 0.84862185             | 0.849546                      | 
-| Its more than 3.85 million inhabitants make it the European Union's most populous city, as measured by population within city limits. | 0.7084338              | 82489026                      |
+| Its more than 3.85 million inhabitants make it the European Union's most populous city, as measured by population within city limits. | 0.7084338              | 0.82489026                      |
 | The city is also one of the states of Germany, and is the third smallest state in the country in terms of area.                       | 0.7534553              | 0.84980094                    |
 
 As you can see the similarity scores for the first chunk that contains "Berlin" are very close to each other.
@@ -60,13 +60,19 @@ We run this evaluation for various BeIR datasets with traditional chunking and o
 To split texts into chunks, we choose a straightforward method, which chunks the tests into strings of 256 tokens.
 Both the traditional and context-sensitive tests used the [jina-embeddings-v2-small-en](https://huggingface.co/jinaai/jina-embeddings-v2-small-en) model.
 
-| Dataset   | AVG Document Length (characters) | Traditional Chunking (nDCG@10) | Context-Sensitive Chunking (nDCG@10) | No Chunking |
-|-----------|----------------------------------|--------------------------------|--------------------------------------|-------------|
-| SciFact   |                           1498.4 |                         64.20% |                           **66.10%** |      63.89% |
-| TRECCOVID |                           1116.7 |                         63.36% |                               64.70% |  **65.18%** |
-| FiQA2018  |                            767.2 |                         33.25% |                           **33.84%** |      33.43% |
-| NFCorpus  |                           1589.8 |                         23.46% |                               29.98% |  **30.40%** |
-| Quora     |                             62.2 |                         87.19% |                               87.19% |      87.19% |
+| Dataset   | AVG Document Length (characters) | Traditional Chunking (nDCG@10) | Context-Sensitive Chunking (nDCG@10) | No Chunking (nDCG@10) |
+|-----------|----------------------------------|--------------------------------|--------------------------------------|-----------------------|
+| SciFact   |                           1498.4 |                         64.20% |                           **66.10%** |                63.89% |
+| TRECCOVID |                           1116.7 |                         63.36% |                               64.70% |            **65.18%** |
+| FiQA2018  |                            767.2 |                         33.25% |                           **33.84%** |                33.43% |
+| NFCorpus  |                           1589.8 |                         23.46% |                               29.98% |            **30.40%** |
+| Quora     |                             62.2 |                         87.19% |                               87.19% |                87.19% |
 
 In all cases, context-sensitive chunking improved the score. In some cases, it also outperforms encoding the whole document into a single embedding, while for other datasets, no chunking performs best. However, this only makes sense if one does not need to rank chunks. One can also see that the average length of the documents correlates with greater improvement in the nDCG scores through context-sensitive chunking.
+
+To reporoduce the evaluation, you can run the following script for the tasks "SciFactChunked", "TRECCOVIDChunked", "FiQA2018Chunked", "NFCorpusChunked", and "QuoraChunked":
+
+```bash
+python3 test_chunked_eval.py {TASK_NAME}
+```
 
