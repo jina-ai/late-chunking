@@ -75,7 +75,7 @@ In all cases, late chunking improved the score. In some cases, it also outperfor
 To reporoduce the evaluation, you can run the following script for the tasks "SciFactChunked", "TRECCOVIDChunked", "FiQA2018Chunked", "NFCorpusChunked", and "QuoraChunked":
 
 ```bash
-python3 test_chunked_eval.py {TASK_NAME}
+python3 test_chunked_eval.py --task-name {TASK_NAME}
 ```
 
 ## Acknowledgement and References

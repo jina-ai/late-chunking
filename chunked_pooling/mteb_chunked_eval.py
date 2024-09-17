@@ -17,11 +17,12 @@ logger = logging.getLogger(__name__)
 class AbsTaskChunkedRetrieval(AbsTask):
     def __init__(
         self,
-        chunking_strategy: Optional[str] = 'fixed',
-        chunk_size: Optional[int] = 256,
+        chunking_strategy: str = None,
         chunked_pooling_enabled: bool = False,
         tokenizer: Optional[Any] = None,
         prune_size: Optional[int] = None,
+        chunk_size: Optional[int] = None,
+        n_sentences: Optional[int] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -31,13 +32,14 @@ class AbsTaskChunkedRetrieval(AbsTask):
             or self.metadata_dict.get('name'),
         )()
         self.chunking_strategy = chunking_strategy
-        self.chunk_size = chunk_size
-        self.chunker = Chunker(
-            chunking_strategy=self.chunking_strategy, chunk_size=self.chunk_size
-        )
+        self.chunker = Chunker(self.chunking_strategy)
         self.chunked_pooling_enabled = chunked_pooling_enabled
         self.tokenizer = tokenizer
         self.prune_size = prune_size
+        self.chunking_args = {
+            'chunk_size': chunk_size,
+            'n_sentences': n_sentences,
+        }
 
     def load_data(self, **kwargs):
         self.retrieval_task.load_data(**kwargs)
@@ -82,13 +84,15 @@ class AbsTaskChunkedRetrieval(AbsTask):
     ):
         # split corpus into chunks
         if not self.chunked_pooling_enabled:
-            corpus = self._apply_chunking(corpus, model.tokenizer)
+            corpus = self._apply_chunking(corpus, self.tokenizer)
             max_chunks = max([len(x) for x in corpus.values()])
             corpus = self._flatten_chunks(corpus)
             k_values = self._calculate_k_values(max_chunks)
             # determine the maximum number of documents to consider in a ranking
             max_k = int(max(k_values) / max_chunks)
-            retriever = RetrievalEvaluator(model, k_values=k_values, **kwargs)
+            retriever = RetrievalEvaluator(
+                model, k_values=k_values, batch_size=batch_size, **kwargs
+            )
             results = retriever(corpus, queries)
         else:
             query_ids = list(queries.keys())
@@ -108,10 +112,10 @@ class AbsTaskChunkedRetrieval(AbsTask):
             chunk_annotations = [
                 self._extend_special_tokens(
                     self.chunker.chunk(
-                        text=text,
-                        tokenizer=self.tokenizer,
+                        text,
+                        self.tokenizer,
                         chunking_strategy=self.chunking_strategy,
-                        chunk_size=self.chunk_size,
+                        **self.chunking_args,
                     )
                 )
                 for text in corpus_texts
@@ -237,13 +241,13 @@ class AbsTaskChunkedRetrieval(AbsTask):
             text = f"{v['title']} {v['text']}" if 'title' in v else v['text']
             current_doc = []
             chunk_annotations = self.chunker.chunk(
-                text=text,
-                tokenizer=tokenizer,
+                text,
+                tokenizer,
                 chunking_strategy=self.chunking_strategy,
-                chunk_size=self.chunk_size,
+                **self.chunking_args,
             )
+            tokens = tokenizer.encode_plus(text, add_special_tokens=False)
             for start_token_idx, end_token_idx in chunk_annotations:
-                tokens = tokenizer.encode_plus(text, add_special_tokens=False)
                 text_chunk = tokenizer.decode(
                     tokens.encodings[0].ids[start_token_idx:end_token_idx]
                 )
@@ -296,3 +300,9 @@ class AbsTaskChunkedRetrieval(AbsTask):
                 new_corpus['test'][x] = corpus['test'][x]
             new_queries['test'][key] = queries['test'][key]
         return new_queries, new_corpus, new_relevant_docs
+
+    def _calculate_metrics_from_split(*args, **kwargs):
+        pass
+
+    def _evaluate_subset(*args, **kwargs):
+        pass
