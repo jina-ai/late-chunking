@@ -10,7 +10,12 @@ from chunked_pooling.chunked_eval_tasks import (
     FiQA2018Chunked,
     NFCorpusChunked,
     QuoraChunked,
+    LEMBWikimQARetrievalChunked,
 )
+
+DEFAULT_CHUNKING_STRATEGY = 'fixed'
+DEFAULT_CHUNK_SIZE = 256
+DEFAULT_N_SENTENCES = 5
 
 
 def main(task_name):
@@ -26,15 +31,34 @@ def main(task_name):
         'jinaai/jina-embeddings-v2-small-en', trust_remote_code=True
     )
 
+    chunking_args = {
+        'chunk_size': DEFAULT_CHUNK_SIZE,
+        'n_sentences': DEFAULT_N_SENTENCES,
+        'chunking_strategy': DEFAULT_CHUNKING_STRATEGY,
+    }
+
     if torch.cuda.is_available():
         model = model.cuda()
 
     model.eval()
 
     # Evaluate with chunking
-    task = task_cls(chunked_pooling_enabled=True, tokenizer=tokenizer, prune_size=None)
+    tasks = [
+        task_cls(
+            chunked_pooling_enabled=True,
+            tokenizer=tokenizer,
+            prune_size=None,
+            **chunking_args,
+        )
+    ]
 
-    evaluation = MTEB(tasks=[task])
+    evaluation = MTEB(
+        tasks=tasks,
+        chunked_pooling_enabled=True,
+        tokenizer=tokenizer,
+        prune_size=None,
+        **chunking_args,
+    )
     evaluation.run(
         model,
         output_folder='results-chunked-pooling',
@@ -43,9 +67,22 @@ def main(task_name):
         batch_size=1,
     )
 
-    task = task_cls(chunked_pooling_enabled=False, tokenizer=tokenizer, prune_size=None)
+    tasks = [
+        task_cls(
+            chunked_pooling_enabled=False,
+            tokenizer=tokenizer,
+            prune_size=None,
+            **chunking_args,
+        )
+    ]
 
-    evaluation = MTEB(tasks=[task])
+    evaluation = MTEB(
+        tasks=tasks,
+        chunked_pooling_enabled=False,
+        tokenizer=tokenizer,
+        prune_size=None,
+        **chunking_args,
+    )
     evaluation.run(
         model,
         output_folder='results-normal-pooling',
