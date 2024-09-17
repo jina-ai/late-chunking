@@ -1,4 +1,4 @@
-import sys
+import click
 import torch.cuda
 
 from transformers import AutoModel, AutoTokenizer
@@ -18,23 +18,33 @@ DEFAULT_CHUNK_SIZE = 256
 DEFAULT_N_SENTENCES = 5
 
 
-def main(task_name):
+@click.command()
+@click.option(
+    '--model-name',
+    default='jinaai/jina-embeddings-v2-small-en',
+    help='The name of the model to use.',
+)
+@click.option(
+    '--strategy',
+    default=DEFAULT_CHUNKING_STRATEGY,
+    help='The chunking strategy to be applied.',
+)
+@click.option(
+    '--task-name', default='SciFactChunked', help='The evaluationtask to perform.'
+)
+def main(model_name, strategy, task_name):
     try:
         task_cls = globals()[task_name]
     except:
         raise ValueError(f'Unknown task name: {task_name}')
 
-    model = AutoModel.from_pretrained(
-        'jinaai/jina-embeddings-v2-small-en', trust_remote_code=True
-    )
-    tokenizer = AutoTokenizer.from_pretrained(
-        'jinaai/jina-embeddings-v2-small-en', trust_remote_code=True
-    )
+    model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 
     chunking_args = {
         'chunk_size': DEFAULT_CHUNK_SIZE,
         'n_sentences': DEFAULT_N_SENTENCES,
-        'chunking_strategy': DEFAULT_CHUNKING_STRATEGY,
+        'chunking_strategy': strategy,
     }
 
     if torch.cuda.is_available():
@@ -93,5 +103,4 @@ def main(task_name):
 
 
 if __name__ == '__main__':
-    task_name = sys.argv[1] if len(sys.argv) > 1 else 'SciFactChunked'
-    main(task_name)
+    main()
