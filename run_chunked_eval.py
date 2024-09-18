@@ -108,7 +108,7 @@ def main(model_name, strategy, task_name):
         output_folder='results-normal-pooling',
         eval_splits=['test'],
         overwrite_results=True,
-        batch_size=1,
+        encode_kwargs = {'batch_size': 1},
     )
 
 
