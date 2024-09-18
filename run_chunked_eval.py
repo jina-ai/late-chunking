@@ -74,7 +74,7 @@ def main(model_name, strategy, task_name):
         output_folder='results-chunked-pooling',
         eval_splits=['test'],
         overwrite_results=True,
-        encode_kwargs = {'batch_size': batch_size},
+        encode_kwargs = {'batch_size': 1},
     )
 
     tasks = [
