@@ -23,19 +23,24 @@ class AbsTaskChunkedRetrieval(AbsTask):
         prune_size: Optional[int] = None,
         chunk_size: Optional[int] = None,
         n_sentences: Optional[int] = None,
+        model_has_instructions: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.retrieval_task = getattr(
-            Retrieval,
-            self.metadata_dict['dataset'].get('name', None)
-            or self.metadata_dict.get('name'),
-        )()
+        try:
+            self.retrieval_task = getattr(
+                Retrieval,
+                self.metadata_dict['dataset'].get('name', None)
+                or self.metadata_dict.get('name'),
+            )()
+        except:
+            logger.warning('Could not initialize retrieval_task')
         self.chunking_strategy = chunking_strategy
         self.chunker = Chunker(self.chunking_strategy)
         self.chunked_pooling_enabled = chunked_pooling_enabled
         self.tokenizer = tokenizer
         self.prune_size = prune_size
+        self.model_has_instructions = model_has_instructions
         self.chunking_args = {
             'chunk_size': chunk_size,
             'n_sentences': n_sentences,
@@ -97,7 +102,7 @@ class AbsTaskChunkedRetrieval(AbsTask):
         else:
             query_ids = list(queries.keys())
             query_texts = [queries[k] for k in query_ids]
-            query_embs = model.encode(query_texts)
+            query_embs = model.encode_queries(query_texts)
 
             corpus_ids = list(corpus.keys())
             corpus_texts = [
@@ -109,17 +114,7 @@ class AbsTaskChunkedRetrieval(AbsTask):
                 for k in corpus_ids
             ]
 
-            chunk_annotations = [
-                self._extend_special_tokens(
-                    self.chunker.chunk(
-                        text,
-                        self.tokenizer,
-                        chunking_strategy=self.chunking_strategy,
-                        **self.chunking_args,
-                    )
-                )
-                for text in corpus_texts
-            ]
+            chunk_annotations = self._calculate_annotations(model, corpus_texts)
 
             corpus_embs = []
             with torch.no_grad():
@@ -130,7 +125,8 @@ class AbsTaskChunkedRetrieval(AbsTask):
                     ),
                     total=(len(corpus_texts) // batch_size),
                 ):
-                    text_inputs = [x[0] for x in inputs]
+                    instr = model.get_instructions()[1]
+                    text_inputs = [instr + x[0] for x in inputs]
                     annotations = [x[1] for x in inputs]
                     model_inputs = self.tokenizer(
                         text_inputs,
@@ -255,6 +251,27 @@ class AbsTaskChunkedRetrieval(AbsTask):
             chunked_corpus[k] = current_doc
         return chunked_corpus
 
+    def _calculate_annotations(self, model, corpus_texts):
+        if self.model_has_instructions:
+            instr = model.get_instructions()[1]
+            instr_tokens = self.tokenizer(instr, add_special_tokens=False)
+            n_instruction_tokens = len(instr_tokens[0])
+        else:
+            n_instruction_tokens = 0
+        chunk_annotations = [
+            self._extend_special_tokens(
+                self.chunker.chunk(
+                    text,
+                    self.tokenizer,
+                    chunking_strategy=self.chunking_strategy,
+                    **self.chunking_args,
+                ),
+                n_instruction_tokens=n_instruction_tokens,
+            )
+            for text in corpus_texts
+        ]
+        return chunk_annotations
+
     @staticmethod
     def _flatten_chunks(chunked_corpus):
         flattened_corpus = dict()
@@ -274,16 +291,26 @@ class AbsTaskChunkedRetrieval(AbsTask):
             yield li[i : i + batch_size]
 
     @staticmethod
-    def _extend_special_tokens(annotations):
+    def _extend_special_tokens(
+        annotations, n_instruction_tokens=0, include_prefix=True, include_sep=True
+    ):
         """Extends the spans because of additional special tokens, e.g. the CLS token
         which are not considered by the chunker.
         """
         new_annotations = []
         for i in range(len(annotations)):
-            left = annotations[i][0] + int(i > 0)  # move everything by one for [CLS]
+            add_left_offset = 1 if (not include_prefix) or int(i > 0) else 0
+            left_offset = 1 + n_instruction_tokens
+            left = (
+                annotations[i][0] + add_left_offset * left_offset
+            )  # move everything by one for [CLS]
+
+            add_sep = 1 if include_sep and ((i + 1) == len(annotations)) else 0
+            right_offset = left_offset + add_sep
             right = (
-                annotations[i][1] + 1 + int((i + 1) == len(annotations))
+                annotations[i][1] + right_offset
             )  # move everything by one for [CLS] and the last one for [SEP]
+
             new_annotations.append((left, right))
         return new_annotations
 

@@ -49,7 +49,7 @@ def chunked_pooling(
             if (end - start) >= 1
         ]
         pooled_embeddings = [
-            embedding.detach().cpu().numpy() for embedding in pooled_embeddings
+            embedding.float().detach().cpu().numpy() for embedding in pooled_embeddings
         ]
         outputs.append(pooled_embeddings)
 

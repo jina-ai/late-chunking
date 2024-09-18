@@ -13,9 +13,21 @@ from chunked_pooling.chunked_eval_tasks import (
     LEMBWikimQARetrievalChunked,
 )
 
+from chunked_pooling.wrappers import MODEL_WRAPPERS
+
 DEFAULT_CHUNKING_STRATEGY = 'fixed'
 DEFAULT_CHUNK_SIZE = 256
 DEFAULT_N_SENTENCES = 5
+
+
+def load_model(model_name):
+    if model_name in MODEL_WRAPPERS:
+        return (
+            MODEL_WRAPPERS[model_name](model_name),
+            MODEL_WRAPPERS[model_name].has_instructions(),
+        )
+    else:
+        return AutoModel.from_pretrained(model_name, trust_remote_code=True), False
 
 
 @click.command()
@@ -38,13 +50,14 @@ def main(model_name, strategy, task_name):
     except:
         raise ValueError(f'Unknown task name: {task_name}')
 
-    model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
+    model, has_instructions = load_model(model_name)
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 
     chunking_args = {
         'chunk_size': DEFAULT_CHUNK_SIZE,
         'n_sentences': DEFAULT_N_SENTENCES,
         'chunking_strategy': strategy,
+        'model_has_instructions': has_instructions,
     }
 
     if torch.cuda.is_available():
