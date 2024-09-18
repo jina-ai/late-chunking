@@ -60,7 +60,6 @@ class AbsTaskChunkedRetrieval(AbsTask):
         self,
         model,
         split: str = "test",
-        *,
         encode_kwargs: dict[str, Any] = {},
         **kwargs
     ) -> dict[str, ScoresDict]:
