@@ -72,10 +72,10 @@ Both the traditional and late chunking tests used the [jina-embeddings-v2-small-
 
 In all cases, late chunking improved the score. In some cases, it also outperforms encoding the whole document into a single embedding, while for other datasets, no chunking performs best. However, this only makes sense if one does not need to rank chunks. One can also see that the average length of the documents correlates with greater improvement in the nDCG scores through late chunking.
 
-To reporoduce the evaluation, you can run the following script for the tasks "SciFactChunked", "TRECCOVIDChunked", "FiQA2018Chunked", "NFCorpusChunked", and "QuoraChunked":
+To reporoduce the evaluation, you can install the dependencies with `pip install .` and run the following script for the tasks "SciFactChunked", "TRECCOVIDChunked", "FiQA2018Chunked", "NFCorpusChunked", and "QuoraChunked":
 
 ```bash
-python3 test_chunked_eval.py --task-name {TASK_NAME}
+python3 run_chunked_eval.py --task-name {TASK_NAME}
 ```
 
 ## Acknowledgement and References
