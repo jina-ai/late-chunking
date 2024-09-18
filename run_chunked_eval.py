@@ -17,6 +17,13 @@ DEFAULT_CHUNKING_STRATEGY = 'fixed'
 DEFAULT_CHUNK_SIZE = 256
 DEFAULT_N_SENTENCES = 5
 
+def remove_prompt_name(original_encode):
+    def wrapper(self, *args, **kwargs):
+        # Remove 'prompt_name' from kwargs if present
+        kwargs.pop('prompt_name', None)
+        return original_encode(self, *args, **kwargs)
+    return wrapper
+
 
 @click.command()
 @click.option(
@@ -39,6 +46,9 @@ def main(model_name, strategy, task_name):
         raise ValueError(f'Unknown task name: {task_name}')
 
     model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
+    if model_name == 'jinaai/jina-embeddings-v2-small-en':
+        print("Overwriting encode")
+        model.encode = remove_prompt_name(model.encode)
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 
     chunking_args = {

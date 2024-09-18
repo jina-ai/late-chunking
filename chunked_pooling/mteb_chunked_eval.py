@@ -7,6 +7,7 @@ from mteb.abstasks import AbsTask
 from mteb.evaluation.evaluators import RetrievalEvaluator
 from mteb.tasks import Retrieval
 from tqdm import tqdm
+from mteb.load_results.mteb_results import ScoresDict
 
 from chunked_pooling import chunked_pooling
 from chunked_pooling.chunking import Chunker
@@ -55,28 +56,37 @@ class AbsTaskChunkedRetrieval(AbsTask):
     def calculate_metadata_metrics(self):
         self.retrieval_task.calculate_metadata_metrics()
 
-    def evaluate(self, model, split='test', **kwargs):
-        scores = {}
-        if self.is_multilingual:
-            for lang in self.langs:
-                logger.info(f'Language: {lang}')
+    def evaluate(
+        self,
+        model,
+        split: str = "test",
+        *,
+        encode_kwargs: dict[str, Any] = {},
+        **kwargs
+    ) -> dict[str, ScoresDict]:
+        scores: dict[str, ScoresDict] = {}
+        hf_subsets = list(self.hf_subsets) if self.is_multilingual else ["default"]
+
+        for hf_subset in hf_subsets:
+            logger.info(f"Subset: {hf_subset}")
+
+            if hf_subset == "default":
                 corpus, queries, relevant_docs = (
-                    self.corpus[lang][split],
-                    self.queries[lang][split],
-                    self.relevant_docs[lang][split],
+                    self.corpus[split],
+                    self.queries[split],
+                    self.relevant_docs[split],
                 )
-                scores[lang] = self._evaluate_monolingual(
-                    model, corpus, queries, relevant_docs, lang, **kwargs
+            else:
+                corpus, queries, relevant_docs = (
+                    self.corpus[hf_subset][split],
+                    self.queries[hf_subset][split],
+                    self.relevant_docs[hf_subset][split],
                 )
-        else:
-            corpus, queries, relevant_docs = (
-                self.corpus[split],
-                self.queries[split],
-                self.relevant_docs[split],
+            
+            scores[hf_subset] = self._evaluate_monolingual(
+                model, corpus, queries, relevant_docs, hf_subset, **kwargs
             )
-            scores = self._evaluate_monolingual(
-                model, corpus, queries, relevant_docs, None, **kwargs
-            )
+        
         return scores
 
     def _evaluate_monolingual(
@@ -165,13 +175,13 @@ class AbsTaskChunkedRetrieval(AbsTask):
 
         doc_results = self.get_doc_results(results)
 
-        ndcg, _map, recall, precision = RetrievalEvaluator.evaluate(
+        ndcg, _map, recall, precision, _ = RetrievalEvaluator.evaluate(
             relevant_docs,
             doc_results,
             [k for k in k_values if k <= max_k],
             ignore_identical_ids=kwargs.get('ignore_identical_ids', True),
         )
-        mrr = RetrievalEvaluator.evaluate_custom(
+        mrr, _ = RetrievalEvaluator.evaluate_custom(
             relevant_docs,
             doc_results,
             [k for k in k_values if k <= max_k],
@@ -184,7 +194,11 @@ class AbsTaskChunkedRetrieval(AbsTask):
             **{f"precision_at_{k.split('@')[1]}": v for (k, v) in precision.items()},
             **{f"mrr_at_{k.split('@')[1]}": v for (k, v) in mrr.items()},
         }
+        self._add_main_score(scores)
         return scores
+
+    def _add_main_score(self, scores: ScoresDict) -> None:
+        scores["main_score"] = scores[self.metadata.main_score]
 
     def get_results(self, chunk_id_list, k_values, query_ids, similarity_matrix):
         results = {}
