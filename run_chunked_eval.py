@@ -13,21 +13,13 @@ from chunked_pooling.chunked_eval_tasks import (
     LEMBWikimQARetrievalChunked,
 )
 
-from chunked_pooling.wrappers import MODEL_WRAPPERS
+from chunked_pooling.wrappers import load_model
 
 DEFAULT_CHUNKING_STRATEGY = 'fixed'
 DEFAULT_CHUNK_SIZE = 256
 DEFAULT_N_SENTENCES = 5
 
-
-def load_model(model_name):
-    if model_name in MODEL_WRAPPERS:
-        return (
-            MODEL_WRAPPERS[model_name](model_name),
-            MODEL_WRAPPERS[model_name].has_instructions(),
-        )
-    else:
-        return AutoModel.from_pretrained(model_name, trust_remote_code=True), False
+BATCH_SIZE = 1
 
 
 @click.command()
@@ -51,6 +43,7 @@ def main(model_name, strategy, task_name):
         raise ValueError(f'Unknown task name: {task_name}')
 
     model, has_instructions = load_model(model_name)
+
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 
     chunking_args = {
@@ -65,7 +58,7 @@ def main(model_name, strategy, task_name):
 
     model.eval()
 
-    # Evaluate with chunking
+    # Evaluate with late chunking
     tasks = [
         task_cls(
             chunked_pooling_enabled=True,
@@ -87,9 +80,11 @@ def main(model_name, strategy, task_name):
         output_folder='results-chunked-pooling',
         eval_splits=['test'],
         overwrite_results=True,
-        batch_size=1,
+        batch_size=BATCH_SIZE,
+        encode_kwargs={'batch_size': BATCH_SIZE},
     )
 
+    # Encode without late chunking
     tasks = [
         task_cls(
             chunked_pooling_enabled=False,
@@ -111,7 +106,8 @@ def main(model_name, strategy, task_name):
         output_folder='results-normal-pooling',
         eval_splits=['test'],
         overwrite_results=True,
-        batch_size=1,
+        batch_size=BATCH_SIZE,
+        encode_kwargs={'batch_size': BATCH_SIZE},
     )
 
 
