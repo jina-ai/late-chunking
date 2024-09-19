@@ -6,9 +6,13 @@ from typing import List, Union, Optional
 
 
 class JinaEmbeddingsV3Wrapper(nn.Module):
-    def __init__(self, model_name, tasks=['retrieval.query', 'retrieval.passage']):
+    def __init__(
+        self, model_name, tasks=['retrieval.query', 'retrieval.passage'], **model_kwargs
+    ):
         super().__init__()
-        self._model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
+        self._model = AutoModel.from_pretrained(
+            model_name, trust_remote_code=True, **model_kwargs
+        )
         self.tasks = tasks
 
     def encode_queries(
@@ -75,9 +79,9 @@ def remove_unsupported_kwargs(original_encode):
     return wrapper
 
 
-def load_model(model_name):
+def load_model(model_name, **model_kwargs):
     if model_name in MODEL_WRAPPERS:
-        model = MODEL_WRAPPERS[model_name](model_name)
+        model = MODEL_WRAPPERS[model_name](model_name, **model_kwargs)
         has_instructions = MODEL_WRAPPERS[model_name].has_instructions()
     else:
         model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
