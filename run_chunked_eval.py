@@ -9,18 +9,12 @@ from chunked_pooling.chunked_eval_tasks import (FiQA2018Chunked,
                                                 SciFactChunked,
                                                 TRECCOVIDChunked)
 
+from chunked_pooling.wrappers import load_model
+
 DEFAULT_CHUNKING_STRATEGY = 'fixed'
 DEFAULT_CHUNK_SIZE = 256
 DEFAULT_N_SENTENCES = 5
-
-
-def remove_prompt_name(original_encode):
-    def wrapper(self, *args, **kwargs):
-        # Remove 'prompt_name' from kwargs if present
-        kwargs.pop('prompt_name', None)
-        return original_encode(self, *args, **kwargs)
-
-    return wrapper
+BATCH_SIZE = 1
 
 
 @click.command()
@@ -43,16 +37,15 @@ def main(model_name, strategy, task_name):
     except:
         raise ValueError(f'Unknown task name: {task_name}')
 
-    model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
-    if model_name == 'jinaai/jina-embeddings-v2-small-en':
-        print("Overwriting encode")
-        model.encode = remove_prompt_name(model.encode)
+    model, has_instructions = load_model(model_name)
+
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 
     chunking_args = {
         'chunk_size': DEFAULT_CHUNK_SIZE,
         'n_sentences': DEFAULT_N_SENTENCES,
         'chunking_strategy': strategy,
+        'model_has_instructions': has_instructions,
     }
 
     if torch.cuda.is_available():
@@ -60,7 +53,7 @@ def main(model_name, strategy, task_name):
 
     model.eval()
 
-    # Evaluate with chunking
+    # Evaluate with late chunking
     tasks = [
         task_cls(
             chunked_pooling_enabled=True,
@@ -82,9 +75,11 @@ def main(model_name, strategy, task_name):
         output_folder='results-chunked-pooling',
         eval_splits=['test'],
         overwrite_results=True,
-        encode_kwargs={'batch_size': 1},
+        batch_size=BATCH_SIZE,
+        encode_kwargs={'batch_size': BATCH_SIZE},
     )
 
+    # Encode without late chunking
     tasks = [
         task_cls(
             chunked_pooling_enabled=False,
@@ -106,7 +101,7 @@ def main(model_name, strategy, task_name):
         output_folder='results-normal-pooling',
         eval_splits=['test'],
         overwrite_results=True,
-        encode_kwargs={'batch_size': 1},
+        encode_kwargs={'batch_size': BATCH_SIZE},
     )
 
 

@@ -2,7 +2,7 @@
 name = "late_chunking"
 requires-python = "~=3.8"
 dependencies = [
-    "jupyterlab==4.2.4",
+    "jupyterlab==4.2.5",
     "transformers==4.43.4",
     "torch==2.4.0",
     "mteb==1.14.20",
