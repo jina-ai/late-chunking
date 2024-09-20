@@ -1,10 +1,11 @@
 name: Run Tests
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
 
 env:
   JINA_API_TOKEN: ${{ secrets.JINA_API_TOKEN }}
