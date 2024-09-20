@@ -5,9 +5,9 @@ import numpy as np
 import torch
 from mteb.abstasks import AbsTask
 from mteb.evaluation.evaluators import RetrievalEvaluator
+from mteb.load_results.mteb_results import ScoresDict
 from mteb.tasks import Retrieval
 from tqdm import tqdm
-from mteb.load_results.mteb_results import ScoresDict
 
 from chunked_pooling import chunked_pooling
 from chunked_pooling.chunking import Chunker
