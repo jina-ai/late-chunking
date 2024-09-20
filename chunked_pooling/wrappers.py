@@ -1,8 +1,8 @@
+from typing import List, Optional, Union
+
 import torch
 import torch.nn as nn
 from transformers import AutoModel
-
-from typing import List, Union, Optional
 
 
 class JinaEmbeddingsV3Wrapper(nn.Module):

@@ -8,7 +8,6 @@ from chunked_pooling.chunked_eval_tasks import (FiQA2018Chunked,
                                                 NFCorpusChunked, QuoraChunked,
                                                 SciFactChunked,
                                                 TRECCOVIDChunked)
-
 from chunked_pooling.wrappers import load_model
 
 DEFAULT_CHUNKING_STRATEGY = 'fixed'

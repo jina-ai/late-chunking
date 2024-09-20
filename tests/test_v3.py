@@ -1,6 +1,6 @@
 from transformers import AutoTokenizer
 
-from run_chunked_eval import load_model, DEFAULT_CHUNK_SIZE
+from run_chunked_eval import DEFAULT_CHUNK_SIZE, load_model
 
 MODEL_NAME = 'jinaai/jina-embeddings-v3'
 

@@ -1,5 +1,4 @@
 import pytest
-
 from mteb.abstasks.TaskMetadata import TaskMetadata
 
 from chunked_pooling.mteb_chunked_eval import AbsTaskChunkedRetrieval
