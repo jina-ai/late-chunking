@@ -99,6 +99,7 @@ def main(model_name, strategy, task_name, eval_split):
         output_folder='results-normal-pooling',
         eval_splits=[eval_split],
         overwrite_results=True,
+        batch_size=BATCH_SIZE,
         encode_kwargs={'batch_size': BATCH_SIZE},
     )
 

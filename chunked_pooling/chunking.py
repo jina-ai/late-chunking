@@ -30,7 +30,6 @@ class Chunker:
 
         self.embed_model = HuggingFaceEmbedding(
             model_name=self.embedding_model_name,
-            max_length=512,
             trust_remote_code=True,
         )
         self.splitter = SemanticSplitterNodeParser(
@@ -60,7 +59,6 @@ class Chunker:
             text,
             return_offsets_mapping=True,
             add_special_tokens=False,
-            max_length=512,
             padding=True,
             truncation=True,
         )
