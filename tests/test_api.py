@@ -19,7 +19,7 @@ def load_api_results():
     url = 'https://api.jina.ai/v1/embeddings'
     headers = {
         'Content-Type': 'application/json',
-        'Authorization': os.environ['JINA_API_TOKEN'],
+        'Authorization': f'Bearer {os.environ["JINA_API_TOKEN"]}',
     }
     data = {
         "model": "jina-embeddings-v3",
