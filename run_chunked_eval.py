@@ -1,24 +1,16 @@
 import click
 import torch.cuda
-
-from transformers import AutoModel, AutoTokenizer
 from mteb import MTEB
+from transformers import AutoModel, AutoTokenizer
 
-from chunked_pooling.chunked_eval_tasks import (
-    SciFactChunked,
-    TRECCOVIDChunked,
-    FiQA2018Chunked,
-    NFCorpusChunked,
-    QuoraChunked,
-    LEMBWikimQARetrievalChunked,
-)
+from chunked_pooling.chunked_eval_tasks import *
+from chunked_pooling.wrappers import load_model
 
 from chunked_pooling.wrappers import load_model
 
 DEFAULT_CHUNKING_STRATEGY = 'fixed'
 DEFAULT_CHUNK_SIZE = 256
 DEFAULT_N_SENTENCES = 5
-
 BATCH_SIZE = 1
 
 
@@ -34,9 +26,12 @@ BATCH_SIZE = 1
     help='The chunking strategy to be applied.',
 )
 @click.option(
-    '--task-name', default='SciFactChunked', help='The evaluationtask to perform.'
+    '--task-name', default='SciFactChunked', help='The evaluation task to perform.'
 )
-def main(model_name, strategy, task_name):
+@click.option(
+    '--eval-split', default='test', help='The name of the evaluation split in the task.'
+)
+def main(model_name, strategy, task_name, eval_split):
     try:
         task_cls = globals()[task_name]
     except:
@@ -78,7 +73,7 @@ def main(model_name, strategy, task_name):
     evaluation.run(
         model,
         output_folder='results-chunked-pooling',
-        eval_splits=['test'],
+        eval_splits=[eval_split],
         overwrite_results=True,
         batch_size=BATCH_SIZE,
         encode_kwargs={'batch_size': BATCH_SIZE},
@@ -104,7 +99,7 @@ def main(model_name, strategy, task_name):
     evaluation.run(
         model,
         output_folder='results-normal-pooling',
-        eval_splits=['test'],
+        eval_splits=[eval_split],
         overwrite_results=True,
         batch_size=BATCH_SIZE,
         encode_kwargs={'batch_size': BATCH_SIZE},

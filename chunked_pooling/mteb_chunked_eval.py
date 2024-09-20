@@ -5,9 +5,9 @@ import numpy as np
 import torch
 from mteb.abstasks import AbsTask
 from mteb.evaluation.evaluators import RetrievalEvaluator
+from mteb.load_results.mteb_results import ScoresDict
 from mteb.tasks import Retrieval
 from tqdm import tqdm
-from mteb.load_results.mteb_results import ScoresDict
 
 from chunked_pooling import chunked_pooling
 from chunked_pooling.chunking import Chunker
@@ -84,13 +84,27 @@ class AbsTaskChunkedRetrieval(AbsTask):
                 )
 
             scores[hf_subset] = self._evaluate_monolingual(
-                model, corpus, queries, relevant_docs, hf_subset, **kwargs
+                model,
+                corpus,
+                queries,
+                relevant_docs,
+                hf_subset,
+                encode_kwargs=encode_kwargs,
+                **kwargs,
             )
 
         return scores
 
     def _evaluate_monolingual(
-        self, model, corpus, queries, relevant_docs, lang=None, batch_size=1, **kwargs
+        self,
+        model,
+        corpus,
+        queries,
+        relevant_docs,
+        lang=None,
+        batch_size=1,
+        encode_kwargs=None,
+        **kwargs,
     ):
         # split corpus into chunks
         if not self.chunked_pooling_enabled:
@@ -101,7 +115,10 @@ class AbsTaskChunkedRetrieval(AbsTask):
             # determine the maximum number of documents to consider in a ranking
             max_k = int(max(k_values) / max_chunks)
             retriever = RetrievalEvaluator(
-                model, k_values=k_values, batch_size=batch_size, **kwargs
+                model,
+                k_values=k_values,
+                encode_kwargs=(encode_kwargs or dict()),
+                **kwargs,
             )
             results = retriever(corpus, queries)
         else:
