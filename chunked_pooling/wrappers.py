@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 from transformers import AutoModel
 
+
 class JinaEmbeddingsV3Wrapper(nn.Module):
     def __init__(
         self, model_name, tasks=['retrieval.query', 'retrieval.passage'], **model_kwargs

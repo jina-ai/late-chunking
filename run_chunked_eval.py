@@ -6,8 +6,6 @@ from transformers import AutoModel, AutoTokenizer
 from chunked_pooling.chunked_eval_tasks import *
 from chunked_pooling.wrappers import load_model
 
-from chunked_pooling.wrappers import load_model
-
 DEFAULT_CHUNKING_STRATEGY = 'fixed'
 DEFAULT_CHUNK_SIZE = 256
 DEFAULT_N_SENTENCES = 5
