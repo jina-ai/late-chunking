@@ -5,9 +5,9 @@ import numpy as np
 import torch
 from mteb.abstasks import AbsTask
 from mteb.evaluation.evaluators import RetrievalEvaluator
+from mteb.load_results.mteb_results import ScoresDict
 from mteb.tasks import Retrieval
 from tqdm import tqdm
-from mteb.load_results.mteb_results import ScoresDict
 
 from chunked_pooling import chunked_pooling
 from chunked_pooling.chunking import Chunker
@@ -57,11 +57,7 @@ class AbsTaskChunkedRetrieval(AbsTask):
         self.retrieval_task.calculate_metadata_metrics()
 
     def evaluate(
-        self,
-        model,
-        split: str = "test",
-        encode_kwargs: dict[str, Any] = {},
-        **kwargs
+        self, model, split: str = "test", encode_kwargs: dict[str, Any] = {}, **kwargs
     ) -> dict[str, ScoresDict]:
         scores: dict[str, ScoresDict] = {}
         hf_subsets = list(self.hf_subsets) if self.is_multilingual else ["default"]
@@ -81,11 +77,11 @@ class AbsTaskChunkedRetrieval(AbsTask):
                     self.queries[hf_subset][split],
                     self.relevant_docs[hf_subset][split],
                 )
-            
+
             scores[hf_subset] = self._evaluate_monolingual(
                 model, corpus, queries, relevant_docs, hf_subset, **kwargs
             )
-        
+
         return scores
 
     def _evaluate_monolingual(

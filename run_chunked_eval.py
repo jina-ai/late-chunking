@@ -1,27 +1,25 @@
 import click
 import torch.cuda
-
-from transformers import AutoModel, AutoTokenizer
 from mteb import MTEB
+from transformers import AutoModel, AutoTokenizer
 
-from chunked_pooling.chunked_eval_tasks import (
-    SciFactChunked,
-    TRECCOVIDChunked,
-    FiQA2018Chunked,
-    NFCorpusChunked,
-    QuoraChunked,
-    LEMBWikimQARetrievalChunked,
-)
+from chunked_pooling.chunked_eval_tasks import (FiQA2018Chunked,
+                                                LEMBWikimQARetrievalChunked,
+                                                NFCorpusChunked, QuoraChunked,
+                                                SciFactChunked,
+                                                TRECCOVIDChunked)
 
 DEFAULT_CHUNKING_STRATEGY = 'fixed'
 DEFAULT_CHUNK_SIZE = 256
 DEFAULT_N_SENTENCES = 5
+
 
 def remove_prompt_name(original_encode):
     def wrapper(self, *args, **kwargs):
         # Remove 'prompt_name' from kwargs if present
         kwargs.pop('prompt_name', None)
         return original_encode(self, *args, **kwargs)
+
     return wrapper
 
 
@@ -84,7 +82,7 @@ def main(model_name, strategy, task_name):
         output_folder='results-chunked-pooling',
         eval_splits=['test'],
         overwrite_results=True,
-        encode_kwargs = {'batch_size': 1},
+        encode_kwargs={'batch_size': 1},
     )
 
     tasks = [
@@ -108,7 +106,7 @@ def main(model_name, strategy, task_name):
         output_folder='results-normal-pooling',
         eval_splits=['test'],
         overwrite_results=True,
-        encode_kwargs = {'batch_size': 1},
+        encode_kwargs={'batch_size': 1},
     )
 
 

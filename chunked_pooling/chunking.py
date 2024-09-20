@@ -19,25 +19,44 @@ class Chunker:
         chunking_strategy: str,
     ):
         if chunking_strategy not in CHUNKING_STRATEGIES:
-            raise ValueError("Unsupported chunking strategy")
+            raise ValueError("Unsupported chunking strategy: ", chunking_strategy)
         self.chunking_strategy = chunking_strategy
+        self.embed_model = None
+        self.embedding_model_name = None
+
+    def _setup_semantic_chunking(self, embedding_model_name):
+        if embedding_model_name:
+            self.embedding_model_name = embedding_model_name
+
+        self.embed_model = HuggingFaceEmbedding(
+            model_name=self.embedding_model_name,
+            max_length=512,
+            trust_remote_code=True,
+        )
+        self.splitter = SemanticSplitterNodeParser(
+            embed_model=self.embed_model,
+            show_progress=False,
+        )
 
     def chunk_semantically(
-        self, text: str, min_tokens: Optional[int] = None
-    ) -> List[Tuple[int, int, int]]:
+        self,
+        text: str,
+        tokenizer: 'AutoTokenizer',
+        embedding_model_name: Optional[str] = None,
+    ) -> List[Tuple[int, int]]:
         if self.embed_model is None:
-            setup_semantic_chunking()
+            self._setup_semantic_chunking(embedding_model_name)
 
-        min_tokens = min_tokens or self.min_tokens
-
+        # Get semantic nodes
         nodes = [
             (node.start_char_idx, node.end_char_idx)
             for node in self.splitter.get_nodes_from_documents(
                 [Document(text=text)], show_progress=False
             )
         ]
+
         # Tokenize the entire text
-        tokens = self.tokenizer.encode_plus(
+        tokens = tokenizer.encode_plus(
             text,
             return_offsets_mapping=True,
             add_special_tokens=False,
@@ -49,16 +68,8 @@ class Chunker:
 
         chunk_spans = []
 
-        if len(token_offsets) < min_tokens:
-            # If the entire text has fewer than 10 tokens, return it as a single chunk
-            chunk_spans.append((0, len(token_offsets) - 1))
-            return chunk_spans
-
-        i = 0
-        while i < len(nodes):
-            char_start, char_end = nodes[i]
-
-            # convert char_start and char_end to token indices
+        for char_start, char_end in nodes:
+            # Convert char indices to token indices
             start_chunk_index = bisect.bisect_left(
                 [offset[0] for offset in token_offsets], char_start
             )
@@ -67,38 +78,13 @@ class Chunker:
                 - 1
             )
 
-            # Ensure each chunk has at least min_tokens tokens
-            while (
-                end_chunk_index - start_chunk_index + 1 < min_tokens
-                and i < len(nodes) - 1
-            ):
-                # Merge with the next node
-                i += 1
-                char_end = nodes[i][1]
-                end_chunk_index = (
-                    bisect.bisect_right(
-                        [offset[1] for offset in token_offsets], char_end
-                    )
-                    - 1
-                )
-
-            # If the chunk is still less than min_tokens and it's the last node, handle it explicitly
-            if (
-                end_chunk_index - start_chunk_index + 1 < min_tokens
-                and i == len(nodes) - 1
-            ):
-                end_chunk_index = min(
-                    start_chunk_index + min_tokens - 1, len(token_offsets) - 1
-                )
-
-            # If the chunk is outside of the tokenized text, break out of loop
-            if start_chunk_index >= len(token_offsets) or end_chunk_index >= len(
+            # Add the chunk span if it's within the tokenized text
+            if start_chunk_index < len(token_offsets) and end_chunk_index < len(
                 token_offsets
             ):
+                chunk_spans.append((start_chunk_index, end_chunk_index))
+            else:
                 break
-
-            chunk_spans.append((start_chunk_index, end_chunk_index))
-            i += 1
 
         return chunk_spans
 
@@ -156,9 +142,15 @@ class Chunker:
         chunking_strategy: str = None,
         chunk_size: Optional[int] = None,
         n_sentences: Optional[int] = None,
+        embedding_model_name: Optional[str] = None,
     ):
+        chunking_strategy = chunking_strategy or self.chunking_strategy
         if chunking_strategy == "semantic":
-            return self.chunk_semantically(text)
+            return self.chunk_semantically(
+                text,
+                embedding_model_name=embedding_model_name,
+                tokenizer=tokenizer,
+            )
         elif chunking_strategy == "fixed":
             if chunk_size < 10:
                 raise ValueError("Chunk size must be greater than 10.")
