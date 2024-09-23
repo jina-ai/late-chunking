@@ -29,7 +29,13 @@ BATCH_SIZE = 1
 @click.option(
     '--eval-split', default='test', help='The name of the evaluation split in the task.'
 )
-def main(model_name, strategy, task_name, eval_split):
+@click.option(
+    '--chunking-model',
+    default=None,
+    required=False,
+    help='The name of the model used for semantic chunking.',
+)
+def main(model_name, strategy, task_name, eval_split, chunking_model):
     try:
         task_cls = globals()[task_name]
     except:
@@ -44,6 +50,7 @@ def main(model_name, strategy, task_name, eval_split):
         'n_sentences': DEFAULT_N_SENTENCES,
         'chunking_strategy': strategy,
         'model_has_instructions': has_instructions,
+        'embedding_model_name': chunking_model if chunking_model else model_name,
     }
 
     if torch.cuda.is_available():

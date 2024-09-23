@@ -98,16 +98,42 @@ def test_chunk_by_tokens():
         assert end - start <= 10
 
 
-def test_chunk_semantically():
+@pytest.mark.parametrize(
+    'model_name',
+    ['jinaai/jina-embeddings-v2-small-en', 'sentence-transformers/all-MiniLM-L6-v2'],
+)
+def test_chunk_semantically(model_name):
     chunker = Chunker(chunking_strategy="semantic")
-    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-    chunks = chunker.chunk(
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokens = tokenizer.encode_plus(
+        EXAMPLE_TEXT_1, add_special_tokens=False, return_offsets_mapping=True
+    )
+    boundary_cues = chunker.chunk(
         EXAMPLE_TEXT_1,
         tokenizer=tokenizer,
         chunking_strategy='semantic',
-        embedding_model_name='jinaai/jina-embeddings-v2-small-en',
+        embedding_model_name=model_name,
     )
-    assert len(chunks) > 0
+
+    # check if it returns boundary cues
+    assert len(boundary_cues) > 0
+
+    # test if bounaries are at the end of sentences
+    for start_token_idx, end_token_idx in boundary_cues:
+        assert (
+            EXAMPLE_TEXT_1[tokens.offset_mapping[end_token_idx - 1][0]] in PUNCTATIONS
+        )
+        decoded_text_chunk = tokenizer.decode(
+            tokens.input_ids[start_token_idx:end_token_idx]
+        )
+
+    # check that the boundary cues are continuous (no token is missing)
+    assert all(
+        [
+            boundary_cues[i][1] == boundary_cues[i + 1][0]
+            for i in range(len(boundary_cues) - 1)
+        ]
+    )
 
 
 def test_empty_input():
