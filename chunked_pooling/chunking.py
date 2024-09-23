@@ -31,6 +31,7 @@ class Chunker:
         self.embed_model = HuggingFaceEmbedding(
             model_name=self.embedding_model_name,
             trust_remote_code=True,
+            embed_batch_size=1,
         )
         self.splitter = SemanticSplitterNodeParser(
             embed_model=self.embed_model,
@@ -71,13 +72,12 @@ class Chunker:
             start_chunk_index = bisect.bisect_left(
                 [offset[0] for offset in token_offsets], char_start
             )
-            end_chunk_index = (
-                bisect.bisect_right([offset[1] for offset in token_offsets], char_end)
-                - 1
+            end_chunk_index = bisect.bisect_right(
+                [offset[1] for offset in token_offsets], char_end
             )
 
             # Add the chunk span if it's within the tokenized text
-            if start_chunk_index < len(token_offsets) and end_chunk_index < len(
+            if start_chunk_index < len(token_offsets) and end_chunk_index <= len(
                 token_offsets
             ):
                 chunk_spans.append((start_chunk_index, end_chunk_index))
