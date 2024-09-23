@@ -44,6 +44,7 @@ def main(model_name, strategy, task_name, eval_split):
         'n_sentences': DEFAULT_N_SENTENCES,
         'chunking_strategy': strategy,
         'model_has_instructions': has_instructions,
+        'embedding_model_name': model_name,
     }
 
     if torch.cuda.is_available():

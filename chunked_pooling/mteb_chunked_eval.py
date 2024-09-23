@@ -25,6 +25,7 @@ class AbsTaskChunkedRetrieval(AbsTask):
         chunk_size: Optional[int] = None,
         n_sentences: Optional[int] = None,
         model_has_instructions: bool = False,
+        embedding_model_name: Optional[str] = None,  # for semantic chunking
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -45,6 +46,7 @@ class AbsTaskChunkedRetrieval(AbsTask):
         self.chunking_args = {
             'chunk_size': chunk_size,
             'n_sentences': n_sentences,
+            'embedding_model_name': embedding_model_name,
         }
 
     def load_data(self, **kwargs):

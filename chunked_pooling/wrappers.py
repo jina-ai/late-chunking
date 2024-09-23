@@ -2,6 +2,7 @@ from typing import List, Optional, Union
 
 import torch
 import torch.nn as nn
+from sentence_transformers import SentenceTransformer
 from transformers import AutoModel
 
 
@@ -61,7 +62,10 @@ class JinaEmbeddingsV3Wrapper(nn.Module):
         return True
 
 
-MODEL_WRAPPERS = {'jinaai/jina-embeddings-v3': JinaEmbeddingsV3Wrapper}
+MODEL_WRAPPERS = {
+    'jinaai/jina-embeddings-v3': JinaEmbeddingsV3Wrapper,
+    'sentence-transformers/all-MiniLM-L6-v2': SentenceTransformer,
+}
 MODELS_WITHOUT_PROMPT_NAME_ARG = [
     'jinaai/jina-embeddings-v2-small-en',
     'jinaai/jina-embeddings-v2-base-en',
@@ -82,7 +86,10 @@ def remove_unsupported_kwargs(original_encode):
 def load_model(model_name, **model_kwargs):
     if model_name in MODEL_WRAPPERS:
         model = MODEL_WRAPPERS[model_name](model_name, **model_kwargs)
-        has_instructions = MODEL_WRAPPERS[model_name].has_instructions()
+        if hasattr(MODEL_WRAPPERS[model_name], 'has_instructions'):
+            has_instructions = MODEL_WRAPPERS[model_name].has_instructions()
+        else:
+            has_instructions = False
     else:
         model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
         has_instructions = False
