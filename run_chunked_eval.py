@@ -47,6 +47,12 @@ BATCH_SIZE = 1
     type=int,
     help='Number of tokens per chunk for fixed strategy.',
 )
+@click.option(
+    '--n-sentences',
+    default=DEFAULT_N_SENTENCES,
+    type=int,
+    help='Number of sentences per chunk for sentence strategy.',
+)
 def main(
     model_name,
     strategy,
@@ -55,6 +61,7 @@ def main(
     chunking_model,
     truncate_max_length,
     chunk_size,
+    n_sentences,
 ):
     try:
         task_cls = globals()[task_name]
@@ -67,7 +74,7 @@ def main(
 
     chunking_args = {
         'chunk_size': chunk_size,
-        'n_sentences': DEFAULT_N_SENTENCES,
+        'n_sentences': n_sentences,
         'chunking_strategy': strategy,
         'model_has_instructions': has_instructions,
         'embedding_model_name': chunking_model if chunking_model else model_name,
