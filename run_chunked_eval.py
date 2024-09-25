@@ -35,7 +35,34 @@ BATCH_SIZE = 1
     required=False,
     help='The name of the model used for semantic chunking.',
 )
-def main(model_name, strategy, task_name, eval_split, chunking_model):
+@click.option(
+    '--truncate-max-length',
+    default=None,
+    type=int,
+    help='Maximum number of tokens; By default, no truncation is done.',
+)
+@click.option(
+    '--chunk-size',
+    default=DEFAULT_CHUNK_SIZE,
+    type=int,
+    help='Number of tokens per chunk for fixed strategy.',
+)
+@click.option(
+    '--n-sentences',
+    default=DEFAULT_N_SENTENCES,
+    type=int,
+    help='Number of sentences per chunk for sentence strategy.',
+)
+def main(
+    model_name,
+    strategy,
+    task_name,
+    eval_split,
+    chunking_model,
+    truncate_max_length,
+    chunk_size,
+    n_sentences,
+):
     try:
         task_cls = globals()[task_name]
     except:
@@ -46,8 +73,8 @@ def main(model_name, strategy, task_name, eval_split, chunking_model):
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 
     chunking_args = {
-        'chunk_size': DEFAULT_CHUNK_SIZE,
-        'n_sentences': DEFAULT_N_SENTENCES,
+        'chunk_size': chunk_size,
+        'n_sentences': n_sentences,
         'chunking_strategy': strategy,
         'model_has_instructions': has_instructions,
         'embedding_model_name': chunking_model if chunking_model else model_name,
@@ -64,6 +91,7 @@ def main(model_name, strategy, task_name, eval_split, chunking_model):
             chunked_pooling_enabled=True,
             tokenizer=tokenizer,
             prune_size=None,
+            truncate_max_length=truncate_max_length,
             **chunking_args,
         )
     ]
@@ -90,6 +118,7 @@ def main(model_name, strategy, task_name, eval_split, chunking_model):
             chunked_pooling_enabled=False,
             tokenizer=tokenizer,
             prune_size=None,
+            truncate_max_length=truncate_max_length,
             **chunking_args,
         )
     ]
