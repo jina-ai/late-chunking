@@ -76,7 +76,6 @@ class NomicAIWrapper(nn.Module):
         return self.instructions
 
     def forward(self, *args, **kwargs):
-        # TODO combine kwargs into input
         model_output = self._model.forward(kwargs)
         base_model_output = BaseModelOutputWithPooling(
             last_hidden_state=model_output['token_embeddings'],
