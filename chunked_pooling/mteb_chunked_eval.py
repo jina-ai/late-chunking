@@ -26,6 +26,7 @@ class AbsTaskChunkedRetrieval(AbsTask):
         n_sentences: Optional[int] = None,
         model_has_instructions: bool = False,
         embedding_model_name: Optional[str] = None,  # for semantic chunking
+        truncate_max_length: Optional[int] = 8192,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -48,6 +49,7 @@ class AbsTaskChunkedRetrieval(AbsTask):
             'n_sentences': n_sentences,
             'embedding_model_name': embedding_model_name,
         }
+        self.truncate_max_length = truncate_max_length
 
     def load_data(self, **kwargs):
         self.retrieval_task.load_data(**kwargs)
@@ -97,6 +99,21 @@ class AbsTaskChunkedRetrieval(AbsTask):
 
         return scores
 
+    def _truncate_documents(self, corpus):
+        for k, v in corpus.items():
+            if 'title' in v:
+                raise NotImplementedError(
+                    'Currently truncation is only implemented for documents without titles'
+                )
+            tokens = self.tokenizer(
+                v['text'],
+                return_offsets_mapping=True,
+                max_length=self.truncate_max_length,
+            )
+            last_token_span = tokens.offset_mapping[-2]
+            v['text'] = v['text'][: last_token_span[1]]
+        return corpus
+
     def _evaluate_monolingual(
         self,
         model,
@@ -108,6 +125,8 @@ class AbsTaskChunkedRetrieval(AbsTask):
         encode_kwargs=None,
         **kwargs,
     ):
+        if self.truncate_max_length:
+            corpus = self._truncate_documents(corpus)
         # split corpus into chunks
         if not self.chunked_pooling_enabled:
             corpus = self._apply_chunking(corpus, self.tokenizer)
