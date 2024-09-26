@@ -106,6 +106,7 @@ if __name__ == "__main__":
 
     fig.suptitle("mAP@10 for Different Embed Sizes and Overlap Sizes", fontsize=18)
     fig.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.show()
 
     # == Plot difference in ncdg and map
 
@@ -153,6 +154,7 @@ if __name__ == "__main__":
     ax[-1].legend(loc='best', fontsize=12, frameon=True)
 
     fig.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.show()
 
 
     

@@ -63,6 +63,7 @@ if __name__ == "__main__":
     ax[task_i].set_xticklabels([8, 16, 32, 64, 128, 256, 512, 1024])
     fig.suptitle("nCDG@10 for Different Chunk Sizes", fontsize=18)
     fig.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.show()
 
     # -- mAP
     fig, ax = plt.subplots(len(task_names), 1, figsize=(12, 3*len(task_names)), sharex=True)
@@ -84,3 +85,4 @@ if __name__ == "__main__":
     ax[task_i].set_xticklabels([8, 16, 32, 64, 128, 256, 512, 1024])
     fig.suptitle("mAP@10 for Different Chunk Sizes", fontsize=18)
     fig.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.show()
