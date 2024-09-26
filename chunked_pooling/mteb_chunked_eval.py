@@ -128,16 +128,16 @@ class AbsTaskChunkedRetrieval(AbsTask):
 
     def _embed_with_soft_boundary(self, model, model_inputs):
         
-        tokens = model_inputs.tokens()
+        len_tokens = len(model_inputs["input_ids"][0])
         
-        if len(tokens) > self.soft_boundary_embed_size:
+        if len_tokens > self.soft_boundary_embed_size:
             indices = []
-            for i in range(0, len(tokens), self.soft_boundary_embed_size - self.soft_boundary_overlap_size):
+            for i in range(0, len_tokens, self.soft_boundary_embed_size - self.soft_boundary_overlap_size):
                 start = i
-                end = min(i + self.soft_boundary_embed_size, len(tokens))
+                end = min(i + self.soft_boundary_embed_size, len_tokens)
                 indices.append((start, end))
         else:
-            indices = [(0, len(tokens))]
+            indices = [(0, len_tokens)]
 
         outputs = []
         for start, end in indices:
@@ -156,16 +156,16 @@ class AbsTaskChunkedRetrieval(AbsTask):
 
     def _embed_with_hard_boundary(self, model, model_inputs):
 
-        tokens = model_inputs.tokens()
+        len_tokens = len(model_inputs["input_ids"][0])
         
-        if len(tokens) > self.hard_boundary_embed_size:
+        if len_tokens > self.hard_boundary_embed_size:
             indices = []
-            for i in range(0, len(tokens), self.hard_boundary_embed_size):
+            for i in range(0, len_tokens, self.hard_boundary_embed_size):
                 start = i
-                end = min(i + self.hard_boundary_embed_size, len(tokens))
+                end = min(i + self.hard_boundary_embed_size, len_tokens)
                 indices.append((start, end))
         else:
-            indices = [(0, len(tokens))]
+            indices = [(0, len_tokens)]
 
         outputs = []
         for start, end in indices:
