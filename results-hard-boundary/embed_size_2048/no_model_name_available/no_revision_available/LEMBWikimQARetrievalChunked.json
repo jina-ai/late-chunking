@@ -1,0 +1,38 @@
+{
+  "dataset_revision": "6e346642246bfb4928c560ee08640dc84d074e8c",
+  "evaluation_time": 19.393415451049805,
+  "kg_co2_emissions": null,
+  "mteb_version": "1.14.20",
+  "scores": {
+    "test": [
+      {
+        "hf_subset": "default",
+        "languages": [
+          "eng-Latn"
+        ],
+        "main_score": 0.94552,
+        "map_at_1": 0.91,
+        "map_at_10": 0.93434,
+        "map_at_3": 0.93,
+        "map_at_5": 0.93233,
+        "mrr_at_1": 0.91,
+        "mrr_at_10": 0.9343373015873015,
+        "mrr_at_3": 0.93,
+        "mrr_at_5": 0.9323333333333333,
+        "ndcg_at_1": 0.91,
+        "ndcg_at_10": 0.94552,
+        "ndcg_at_3": 0.93682,
+        "ndcg_at_5": 0.94099,
+        "precision_at_1": 0.91,
+        "precision_at_10": 0.098,
+        "precision_at_3": 0.31889,
+        "precision_at_5": 0.19333,
+        "recall_at_1": 0.91,
+        "recall_at_10": 0.98,
+        "recall_at_3": 0.95667,
+        "recall_at_5": 0.96667
+      }
+    ]
+  },
+  "task_name": "LEMBWikimQARetrievalChunked"
+}
