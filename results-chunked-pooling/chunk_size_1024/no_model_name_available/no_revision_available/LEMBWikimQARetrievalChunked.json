@@ -1,0 +1,43 @@
+{
+  "dataset_revision": "10039a580487dacecf79db69166e17ace3ede392",
+  "evaluation_time": 37.14106869697571,
+  "kg_co2_emissions": null,
+  "mteb_version": "1.14.20",
+  "scores": {
+    "test": [
+      {
+        "hf_subset": "default",
+        "languages": [
+          "eng-Latn"
+        ],
+        "main_score": 0.89865,
+        "map_at_1": 0.84,
+        "map_at_10": 0.88085,
+        "map_at_20": 0.8821,
+        "map_at_3": 0.87389,
+        "map_at_5": 0.87856,
+        "mrr_at_1": 0.84,
+        "mrr_at_10": 0.8808465608465609,
+        "mrr_at_20": 0.8820996378349318,
+        "mrr_at_3": 0.8738888888888889,
+        "mrr_at_5": 0.8785555555555555,
+        "ndcg_at_1": 0.84,
+        "ndcg_at_10": 0.89865,
+        "ndcg_at_20": 0.90299,
+        "ndcg_at_3": 0.88488,
+        "ndcg_at_5": 0.8932,
+        "precision_at_1": 0.84,
+        "precision_at_10": 0.09533,
+        "precision_at_20": 0.0485,
+        "precision_at_3": 0.30556,
+        "precision_at_5": 0.18733,
+        "recall_at_1": 0.84,
+        "recall_at_10": 0.95333,
+        "recall_at_20": 0.97,
+        "recall_at_3": 0.91667,
+        "recall_at_5": 0.93667
+      }
+    ]
+  },
+  "task_name": "LEMBWikimQARetrievalChunked"
+}
