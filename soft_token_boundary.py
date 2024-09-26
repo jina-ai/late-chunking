@@ -26,7 +26,13 @@ import torch.cuda
 from mteb import MTEB
 from transformers import AutoModel, AutoTokenizer
 
-from chunked_pooling.chunked_eval_tasks import LEMBWikimQARetrievalChunked, LEMBNeedleRetrievalChunked
+from chunked_pooling.chunked_eval_tasks import (
+    LEMBWikimQARetrievalChunked, 
+    LEMBNeedleRetrievalChunked, 
+    LEMBNarrativeQARetrievalChunked,
+    LEMBQMSumRetrievalChunked,
+    LEMBSummScreenFDRetrievalChunked
+)
 from chunked_pooling.wrappers import load_model
 
 DEFAULT_CHUNKING_STRATEGY = 'fixed'
@@ -77,13 +83,13 @@ BATCH_SIZE = 1
     help='Number of sentences per chunk for sentence strategy.',
 )
 @click.option(
-    '--soft_boundary_embed_size',
+    '--soft-boundary-embed-size',
     default=8192,
     type=int,
     help='Token length of the embeddings that come before/after soft boundaries (i.e. overlapping embeddings). Above zero, soft boundaries are used.',
 )
 @click.option(
-    '--hard_boundary_embed_size',
+    '--hard-boundary-embed-size',
     default=8192,
     type=int,
     help='Token length of the embeddings that come before/after hard boundaries. Above zero, hard boundaries are used.',
@@ -178,6 +184,7 @@ def main(
         prune_size=None,
         **chunking_args,
     )
+
     evaluation.run(
         model,
         output_folder=f'results-hard-boundary/embed_size_{hard_boundary_embed_size}',
@@ -216,5 +223,7 @@ def main(
         encode_kwargs={'batch_size': BATCH_SIZE},
     )
 
+    x=1
+    
 if __name__ == '__main__':
     main()
