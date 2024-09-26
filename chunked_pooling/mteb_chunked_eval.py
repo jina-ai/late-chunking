@@ -27,6 +27,9 @@ class AbsTaskChunkedRetrieval(AbsTask):
         model_has_instructions: bool = False,
         embedding_model_name: Optional[str] = None,  # for semantic chunking
         truncate_max_length: Optional[int] = 8192,
+        soft_boundary_embed_size: Optional[int] = 0,
+        soft_boundary_overlap_size: Optional[int] = 512,
+        hard_boundary_embed_size: Optional[int] = 0,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -50,6 +53,13 @@ class AbsTaskChunkedRetrieval(AbsTask):
             'embedding_model_name': embedding_model_name,
         }
         self.truncate_max_length = truncate_max_length
+
+        if soft_boundary_embed_size > 0 and hard_boundary_embed_size > 0:
+            raise ValueError('Cannot use both soft and hard boundaries')
+
+        self.soft_boundary_embed_size = soft_boundary_embed_size
+        self.soft_boundary_overlap_size = soft_boundary_overlap_size
+        self.hard_boundary_embed_size = hard_boundary_embed_size
 
     def load_data(self, **kwargs):
         self.retrieval_task.load_data(**kwargs)
@@ -111,8 +121,64 @@ class AbsTaskChunkedRetrieval(AbsTask):
                 max_length=self.truncate_max_length,
             )
             last_token_span = tokens.offset_mapping[-2]
+            if len(self.tokenizer(v["text"]).tokens()) > self.truncate_max_length:
+                print(f"Document {k} will be truncated to {self.truncate_max_length} tokens")
             v['text'] = v['text'][: last_token_span[1]]
         return corpus
+
+    def _embed_with_soft_boundary(self, model, model_inputs):
+        
+        tokens = model_inputs.tokens()
+        
+        if len(tokens) > self.soft_boundary_embed_size:
+            indices = []
+            for i in range(0, len(tokens), self.soft_boundary_embed_size - self.soft_boundary_overlap_size):
+                start = i
+                end = min(i + self.soft_boundary_embed_size, len(tokens))
+                indices.append((start, end))
+        else:
+            indices = [(0, len(tokens))]
+
+        outputs = []
+        for start, end in indices:
+
+            batch_inputs = {k: v[:, start:end] for k, v in model_inputs.items()}
+
+            with torch.no_grad():
+                model_output = model(**batch_inputs)       
+
+            if start > 0:
+                outputs.append(model_output[0][:, self.soft_boundary_overlap_size:])
+            else:
+                outputs.append(model_output[0])
+
+        return torch.cat(outputs, dim=1).to(model.device)
+
+    def _embed_with_hard_boundary(self, model, model_inputs):
+
+        tokens = model_inputs.tokens()
+        
+        if len(tokens) > self.hard_boundary_embed_size:
+            indices = []
+            for i in range(0, len(tokens), self.hard_boundary_embed_size):
+                start = i
+                end = min(i + self.hard_boundary_embed_size, len(tokens))
+                indices.append((start, end))
+        else:
+            indices = [(0, len(tokens))]
+
+        outputs = []
+        for start, end in indices:
+
+            batch_inputs = {k: v[:, start:end] for k, v in model_inputs.items()}
+
+            with torch.no_grad():
+                model_output = model(**batch_inputs)       
+
+            outputs.append(model_output[0])
+
+        return torch.cat(outputs, dim=1).to(model.device)
+    
 
     def _evaluate_monolingual(
         self,
@@ -181,17 +247,28 @@ class AbsTaskChunkedRetrieval(AbsTask):
                         text_inputs,
                         return_tensors='pt',
                         padding=True,
-                        truncation=True,
-                        max_length=8192,
+                        truncation=False
                     )
                     if model.device.type == 'cuda':
                         model_inputs = {
                             k: v.to(model.device) for k, v in model_inputs.items()
                         }
-                    model_outputs = model(**model_inputs)
-                    output_embs = chunked_pooling(
-                        model_outputs, annotations, max_length=8192
-                    )
+
+                    if self.soft_boundary_embed_size > 0:
+                        model_outputs = self._embed_with_soft_boundary(model, model_inputs)
+                        output_embs = chunked_pooling(
+                            [model_outputs], annotations, max_length=None
+                        )
+                    elif self.hard_boundary_embed_size > 0:
+                        model_outputs = self._embed_with_hard_boundary(model, model_inputs)
+                        output_embs = chunked_pooling(
+                            [model_outputs], annotations, max_length=None
+                        )
+                    else:
+                        model_outputs = model(**model_inputs)
+                        output_embs = chunked_pooling(
+                            model_outputs, annotations, max_length=self.truncate_max_length
+                        )
                     corpus_embs.extend(output_embs)
 
             max_chunks = max([len(x) for x in corpus_embs])
