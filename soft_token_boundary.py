@@ -39,6 +39,9 @@ DEFAULT_CHUNKING_STRATEGY = 'fixed'
 DEFAULT_CHUNK_SIZE = 256
 DEFAULT_N_SENTENCES = 5
 BATCH_SIZE = 1
+DEFAULT_SOFT_BOUNDARY_EMBED_SIZE = 8192
+DEFAULT_HARD_BOUNDARY_EMBED_SIZE = 0
+
 
 
 @click.command()
@@ -84,13 +87,13 @@ BATCH_SIZE = 1
 )
 @click.option(
     '--soft-boundary-embed-size',
-    default=8192,
+    default=DEFAULT_SOFT_BOUNDARY_EMBED_SIZE,
     type=int,
     help='Token length of the embeddings that come before/after soft boundaries (i.e. overlapping embeddings). Above zero, soft boundaries are used.',
 )
 @click.option(
     '--hard-boundary-embed-size',
-    default=8192,
+    default=DEFAULT_HARD_BOUNDARY_EMBED_SIZE,
     type=int,
     help='Token length of the embeddings that come before/after hard boundaries. Above zero, hard boundaries are used.',
 )
