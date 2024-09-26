@@ -71,7 +71,7 @@ if __name__ == "__main__":
         ax.set_ylabel("nCDG@10", fontsize=14)
         ax.legend(loc='best', fontsize=12)
 
-    ax.axhline(truncated_boundary_ndcg, label=f"Truncated Boundary (at 8192)", color="k", linestyle='-.', linewidth=2)
+    # ax.axhline(truncated_boundary_ndcg, label=f"Truncated Boundary (at 8192)", color="k", linestyle='-.', linewidth=2)
     ax.set_xlabel("Overlap Size", fontsize=14)
     fig.suptitle("NDCG@10 for Different Embed Sizes and Overlap Sizes", fontsize=18)
     fig.tight_layout(rect=[0, 0, 1, 0.96])
@@ -95,7 +95,22 @@ if __name__ == "__main__":
         ax.legend(loc='best', fontsize=12)
 
 
-    ax.axhline(truncated_boundary_map, label=f"Truncated Boundary (at 8192)", color="k", linestyle='-.', linewidth=2)
+    # ax.axhline(truncated_boundary_map, label=f"Truncated Boundary (at 8192)", color="k", linestyle='-.', linewidth=2)
     ax.set_xlabel("Overlap Size", fontsize=14)
     fig.suptitle("mAP@10 for Different Embed Sizes and Overlap Sizes", fontsize=18)
     fig.tight_layout(rect=[0, 0, 1, 0.96])
+
+
+
+    from datasets import load_dataset
+    name = "narrativeqa"
+    dataset = load_dataset(path="dwzhu/LongEmbed", name=name, split="corpus")
+    print(dataset.info.download_checksums)
+
+    name = "summ_screen_fd"
+    dataset = load_dataset(path="dwzhu/LongEmbed", name=name, split="corpus")
+    print(dataset.info.download_checksums)
+
+    name = "qmsum"
+    dataset = load_dataset(path="dwzhu/LongEmbed", name=name, split="corpus")
+    print(dataset.info.download_checksums)
