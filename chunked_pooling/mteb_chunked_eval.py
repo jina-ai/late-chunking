@@ -121,8 +121,6 @@ class AbsTaskChunkedRetrieval(AbsTask):
                 max_length=self.truncate_max_length,
             )
             last_token_span = tokens.offset_mapping[-2]
-            if len(self.tokenizer(v["text"]).tokens()) > self.truncate_max_length:
-                print(f"Document {k} will be truncated to {self.truncate_max_length} tokens")
             v['text'] = v['text'][: last_token_span[1]]
         return corpus
 
@@ -132,7 +130,7 @@ class AbsTaskChunkedRetrieval(AbsTask):
         
         if len_tokens > self.soft_boundary_embed_size:
             indices = []
-            for pos, i in enumerate(range(0, len_tokens, self.soft_boundary_embed_size - self.soft_boundary_overlap_size)):
+            for i in range(0, len_tokens, self.soft_boundary_embed_size - self.soft_boundary_overlap_size):
                 start = i
                 end = min(i + self.soft_boundary_embed_size, len_tokens)
                 indices.append((start, end))

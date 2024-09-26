@@ -83,12 +83,6 @@ BATCH_SIZE = 1
     help='Token length of the embeddings that come before/after soft boundaries (i.e. overlapping embeddings). Above zero, soft boundaries are used.',
 )
 @click.option(
-    '--soft_boundary_overlap_size',
-    default=512,
-    type=int,
-    help='Overlap between the embeddings before and after the soft boundary, in tokens.',
-)
-@click.option(
     '--hard_boundary_embed_size',
     default=8192,
     type=int,
@@ -105,7 +99,6 @@ def main(
     chunk_size,
     n_sentences,
     soft_boundary_embed_size,
-    soft_boundary_overlap_size,
     hard_boundary_embed_size,
 ):
     try:
@@ -130,35 +123,39 @@ def main(
 
     model.eval()
 
-    # Evaluate with soft boundary
-    tasks = [
-        task_cls(
+    overlap_sizes = [32, 64, 128, 256, 512]
+    for overlap_size in overlap_sizes:
+
+
+        # Evaluate with soft boundary
+        tasks = [
+            task_cls(
+                chunked_pooling_enabled=True,
+                tokenizer=tokenizer,
+                prune_size=None,
+                truncate_max_length=0,
+                soft_boundary_embed_size=soft_boundary_embed_size,
+                soft_boundary_overlap_size=overlap_size,
+                hard_boundary_embed_size=0,
+                **chunking_args,
+            )
+        ]
+
+        evaluation = MTEB(
+            tasks=tasks,
             chunked_pooling_enabled=True,
             tokenizer=tokenizer,
             prune_size=None,
-            truncate_max_length=0,
-            soft_boundary_embed_size=soft_boundary_embed_size,
-            soft_boundary_overlap_size=soft_boundary_overlap_size,
-            hard_boundary_embed_size=0,
             **chunking_args,
         )
-    ]
-
-    evaluation = MTEB(
-        tasks=tasks,
-        chunked_pooling_enabled=True,
-        tokenizer=tokenizer,
-        prune_size=None,
-        **chunking_args,
-    )
-    evaluation.run(
-        model,
-        output_folder=f'results-soft-boundary/embed_size_{soft_boundary_embed_size}',
-        eval_splits=[eval_split],
-        overwrite_results=True,
-        batch_size=BATCH_SIZE,
-        encode_kwargs={'batch_size': BATCH_SIZE},
-    )
+        evaluation.run(
+            model,
+            output_folder=f'results-soft-boundary/embed_size_{soft_boundary_embed_size}/overlap_{overlap_size}',
+            eval_splits=[eval_split],
+            overwrite_results=True,
+            batch_size=BATCH_SIZE,
+            encode_kwargs={'batch_size': BATCH_SIZE},
+        )
     
 
     # Evaluate with hard boundary
