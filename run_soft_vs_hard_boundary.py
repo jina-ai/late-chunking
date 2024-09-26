@@ -1,26 +1,3 @@
-# soft_token_boundary.py
-#
-# long context embedding models (like jina-embeddings-v2-base-en) have a limit of 8192 tokens
-# for longer context documents, such as those in LongEmbed benchmarks, how do we embed them?
-#
-# method 1: truncate the document at the token boundary
-# method 2: embed twice, before and after the truncation point as many times as needed
-# method 3: same as method 2 but with overlap
-#
-# obviously method 1 is not great. any information after the 8192nd token is discarded.
-# method 3 should perform the best, but how much better is it?
-# 
-# and do we need to look into reducing the size of context window?
-#
-# let's use the WikimQA dataset to test these ideas, just method 2 and 3.
-#
-# let's also try to use the mteb benchmark to evaluate the results.
-
-from chunked_pooling.wrappers import load_model
-from transformers import AutoModel, AutoTokenizer, pipeline
-# from experiments.lib import ContextualRetrievalEmbedder, LateChunkingEmbedder
-
-
 import click
 import torch.cuda
 from mteb import MTEB
