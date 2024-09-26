@@ -127,28 +127,28 @@ class AbsTaskChunkedRetrieval(AbsTask):
         return corpus
 
     def _embed_with_soft_boundary(self, model, model_inputs):
+        
         len_tokens = len(model_inputs["input_ids"][0])
         
         if len_tokens > self.soft_boundary_embed_size:
             indices = []
-            start = 0
-            while start < len_tokens:
-                end = min(start + self.soft_boundary_embed_size, len_tokens)
+            for pos, i in enumerate(range(0, len_tokens, self.soft_boundary_embed_size - self.soft_boundary_overlap_size)):
+                start = i
+                end = min(i + self.soft_boundary_embed_size, len_tokens)
                 indices.append((start, end))
-                start = end - self.soft_boundary_overlap_size
         else:
             indices = [(0, len_tokens)]
 
         outputs = []
-        for i, (start, end) in enumerate(indices):
+        for start, end in indices:
+
             batch_inputs = {k: v[:, start:end] for k, v in model_inputs.items()}
 
             with torch.no_grad():
                 model_output = model(**batch_inputs)       
 
-            if i > 0:
-                overlap = self.soft_boundary_overlap_size * i
-                outputs.append(model_output[0][:, overlap:])
+            if start > 0:
+                outputs.append(model_output[0][:, self.soft_boundary_overlap_size:])
             else:
                 outputs.append(model_output[0])
 
