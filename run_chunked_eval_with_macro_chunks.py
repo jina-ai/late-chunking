@@ -10,8 +10,8 @@ DEFAULT_CHUNKING_STRATEGY = 'fixed'
 DEFAULT_N_SENTENCES = 5
 BATCH_SIZE = 1
 DEFAULT_OVERLAP_SIZE = 256
-DEFAULT_SOFT_BOUNDARY_EMBED_SIZE = 8192
-DEFAULT_HARD_BOUNDARY_EMBED_SIZE = 0
+DEFAULT_SOFT_BOUNDARY_EMBED_SIZE = 8192 # set to 0 to disable soft boundaries
+DEFAULT_HARD_BOUNDARY_EMBED_SIZE = 0    # set to 0 to disable hard boundaries
 
 
 @click.command()
@@ -108,34 +108,34 @@ def main(
         }
 
         #  == Late Chunking ==
-        tasks = [
-            task_cls(
-                chunked_pooling_enabled=True,
-                tokenizer=tokenizer,
-                prune_size=None,
-                truncate_max_length=truncate_max_length,
-                soft_boundary_embed_size=soft_boundary_embed_size,
-                soft_boundary_overlap_size=overlap_size,
-                hard_boundary_embed_size=hard_boundary_embed_size,
-                **chunking_args,
-            )
-        ]
+        # tasks = [
+        #     task_cls(
+        #         chunked_pooling_enabled=True,
+        #         tokenizer=tokenizer,
+        #         prune_size=None,
+        #         truncate_max_length=truncate_max_length,
+        #         soft_boundary_embed_size=soft_boundary_embed_size,
+        #         soft_boundary_overlap_size=overlap_size,
+        #         hard_boundary_embed_size=hard_boundary_embed_size,
+        #         **chunking_args,
+        #     )
+        # ]
 
-        evaluation = MTEB(
-            tasks=tasks,
-            chunked_pooling_enabled=True,
-            tokenizer=tokenizer,
-            prune_size=None,
-            **chunking_args,
-        )
-        evaluation.run(
-            model,
-            output_folder=f'results-chunked-pooling/chunk_size_{chunk_size}',
-            eval_splits=[eval_split],
-            overwrite_results=True,
-            batch_size=BATCH_SIZE,
-            encode_kwargs={'batch_size': BATCH_SIZE},
-        )
+        # evaluation = MTEB(
+        #     tasks=tasks,
+        #     chunked_pooling_enabled=True,
+        #     tokenizer=tokenizer,
+        #     prune_size=None,
+        #     **chunking_args,
+        # )
+        # evaluation.run(
+        #     model,
+        #     output_folder=f'results-chunked-pooling/chunk_size_{chunk_size}',
+        #     eval_splits=[eval_split],
+        #     overwrite_results=True,
+        #     batch_size=BATCH_SIZE,
+        #     encode_kwargs={'batch_size': BATCH_SIZE},
+        # )
 
         #  == Naive Chunking ==
         # naive chunking does not need soft boundaries because chunk size is guaranteed to be <8192 tokens

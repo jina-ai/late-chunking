@@ -245,7 +245,7 @@ class AbsTaskChunkedRetrieval(AbsTask):
                         text_inputs,
                         return_tensors='pt',
                         padding=True,
-                        truncation=True,
+                        truncation=self.truncate_max_length is not None,
                         max_length=self.truncate_max_length,
                     )
                     if model.device.type == 'cuda':
@@ -263,7 +263,7 @@ class AbsTaskChunkedRetrieval(AbsTask):
                         output_embs = chunked_pooling(
                             [model_outputs], annotations, max_length=None
                         )
-                    else:
+                    else: # truncation
                         model_outputs = model(**model_inputs)
                         output_embs = chunked_pooling(
                             model_outputs, annotations, max_length=self.truncate_max_length
