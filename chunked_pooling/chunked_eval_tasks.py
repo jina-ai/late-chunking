@@ -456,7 +456,7 @@ class LEMBSummScreenFDRetrievalChunked(AbsTaskChunkedRetrieval):
         self.data_loaded = True
 
 
-class LEMBQMSumRetrievalRetrievalChunked(AbsTaskChunkedRetrieval):
+class LEMBQMSumRetrievalChunked(AbsTaskChunkedRetrieval):
     """
     modified from https://github.com/embeddings-benchmark/mteb/blob/main/mteb/tasks/Retrieval/eng/LEMBWikimQARetrieval.py
     """
@@ -464,11 +464,11 @@ class LEMBQMSumRetrievalRetrievalChunked(AbsTaskChunkedRetrieval):
     _EVAL_SPLIT = "test"
 
     metadata = TaskMetadata(
-        name="LEMBQMSumRetrievalRetrievalChunked",
+        name="LEMBQMSumRetrievalChunked",
         dataset={
             "path": "dwzhu/LongEmbed",
             "revision": "10039a580487dacecf79db69166e17ace3ede392",
-            "name": "LEMBQMSumRetrievalRetrieval",
+            "name": "LEMBQMSumRetrieval",
         },
         reference="https://huggingface.co/datasets/dwzhu/LongEmbed",
         description=("qmsum subset of dwzhu/LongEmbed dataset."),

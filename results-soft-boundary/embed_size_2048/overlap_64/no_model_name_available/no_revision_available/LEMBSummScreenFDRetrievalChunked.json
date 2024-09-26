@@ -1,0 +1,38 @@
+{
+  "dataset_revision": "10039a580487dacecf79db69166e17ace3ede392",
+  "evaluation_time": 21.254602670669556,
+  "kg_co2_emissions": null,
+  "mteb_version": "1.14.20",
+  "scores": {
+    "test": [
+      {
+        "hf_subset": "default",
+        "languages": [
+          "eng-Latn"
+        ],
+        "main_score": 0.89022,
+        "map_at_1": 0.8006,
+        "map_at_10": 0.8639,
+        "map_at_3": 0.85367,
+        "map_at_5": 0.86096,
+        "mrr_at_1": 0.8005952380952381,
+        "mrr_at_10": 0.8638971560846561,
+        "mrr_at_3": 0.8536706349206349,
+        "mrr_at_5": 0.8609623015873017,
+        "ndcg_at_1": 0.8006,
+        "ndcg_at_10": 0.89022,
+        "ndcg_at_3": 0.87064,
+        "ndcg_at_5": 0.88333,
+        "precision_at_1": 0.8006,
+        "precision_at_10": 0.09702,
+        "precision_at_3": 0.30655,
+        "precision_at_5": 0.18988,
+        "recall_at_1": 0.8006,
+        "recall_at_10": 0.97024,
+        "recall_at_3": 0.91964,
+        "recall_at_5": 0.9494
+      }
+    ]
+  },
+  "task_name": "LEMBSummScreenFDRetrievalChunked"
+}
