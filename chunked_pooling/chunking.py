@@ -150,8 +150,8 @@ class Chunker:
                 tokenizer=tokenizer,
             )
         elif chunking_strategy == "fixed":
-            if chunk_size < 8:
-                raise ValueError("Chunk size must be >= 8.")
+            if chunk_size < 4:
+                raise ValueError("Chunk size must be >= 4.")
             return self.chunk_by_tokens(text, chunk_size, tokenizer)
         elif chunking_strategy == "sentences":
             return self.chunk_by_sentences(text, n_sentences, tokenizer)
