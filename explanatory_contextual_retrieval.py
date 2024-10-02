@@ -4,9 +4,6 @@
 # contextual retrieval method. contextual retrieval manually inserts context to each
 # chunk, i.e. forces context to be around each chunk. so works as a good comparison
 # to late chunking to see if the similarities are similar (which they appear to be)
-# 
-# pip requirements:
-# accelerate?
 
 from chunked_pooling.wrappers import load_model
 from transformers import AutoModel, AutoTokenizer, pipeline, AutoModelForCausalLM
@@ -108,7 +105,7 @@ class ContextualRetrievalEmbedder():
     def __init__(self, 
             model: AutoModel,
             tokenizer: AutoTokenizer, 
-            llm_name: str = "meta-llama/Meta-Llama-3.1-8B",
+            llm_name: str = "microsoft/Phi-3.5-mini-instruct",
             chunking_strategy: str = "fixed"
         ):
 
