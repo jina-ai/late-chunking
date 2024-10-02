@@ -11,7 +11,8 @@ DEFAULT_CHUNK_SIZE = 256
 DEFAULT_N_SENTENCES = 5
 BATCH_SIZE = 1
 DEFAULT_LONG_LATE_CHUNKING_OVERLAP_SIZE = 256
-DEFAULT_LONG_LATE_CHUNKING_EMBED_SIZE = 8192 # set to 0 to disable long late chunking
+DEFAULT_LONG_LATE_CHUNKING_EMBED_SIZE = 0 # set to 0 to disable long late chunking
+DEFAULT_TRUNCATE_MAX_LENGTH = 8192
 
 
 @click.command()
@@ -39,9 +40,9 @@ DEFAULT_LONG_LATE_CHUNKING_EMBED_SIZE = 8192 # set to 0 to disable long late chu
 )
 @click.option(
     '--truncate-max-length',
-    default=None,
+    default=DEFAULT_TRUNCATE_MAX_LENGTH,
     type=int,
-    help='Maximum number of tokens; By default, no truncation is done. If defined, Long Late Chunking algorithm is disabled.',
+    help='Maximum number of tokens; by default, truncation to 8192 tokens. If None, Long Late Chunking algorithm should be enabled.',
 )
 @click.option(
     '--chunk-size',
