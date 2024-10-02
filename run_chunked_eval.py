@@ -86,11 +86,9 @@ def main(
         raise ValueError(f'Unknown task name: {task_name}')
     
     if truncate_max_length is not None and (long_late_chunking_embed_size > 0):
-        long_late_chunking_embed_size = 0
-        print(f'Long Late Chunking algorithm will be disabled because truncate max length is defined, hence documents are truncated.')
+        truncate_max_length = None
+        print(f'Truncation is disabled because Long Late Chunking algorithm is enabled.')
     
-    assert (long_late_chunking_embed_size > 0 or truncate_max_length is not None), 'Define either long late chunking or truncation to handle documents.'
-
     model, has_instructions = load_model(model_name)
 
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
