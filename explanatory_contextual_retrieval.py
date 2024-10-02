@@ -9,8 +9,8 @@
 # accelerate?
 
 from chunked_pooling.wrappers import load_model
-from transformers import AutoModel, AutoTokenizer, pipeline
-
+from transformers import AutoModel, AutoTokenizer, pipeline, AutoModelForCausalLM
+import torch
 import numpy as np
 
 import chunked_pooling
@@ -39,6 +39,23 @@ def request_anthropic_api(prompt: str):
     }
     response = requests.post(url, headers=headers, json=data)
     return response.json()["content"][0]["text"]
+
+def setup_local_llm(llm_name):
+    
+    model = AutoModelForCausalLM.from_pretrained(llm_name, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(llm_name, trust_remote_code=True)
+
+    def llm(prompt):
+        messages = [{"role": "user", "content": prompt}]
+        inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt")
+        inputs = inputs.to(model.device)
+        outputs = model.generate(inputs, max_new_tokens=512)
+        text_output = tokenizer.batch_decode(outputs)[0]
+        if "<|assistant|>" in text_output:
+            text_output = text_output.split("<|assistant|>")[1].strip()
+        return text_output
+    
+    return llm
 
 def cosine_similarity(vector1, vector2):
     vector1_norm = vector1 / np.linalg.norm(vector1)
@@ -94,11 +111,9 @@ class ContextualRetrievalEmbedder():
             llm_name: str = "meta-llama/Meta-Llama-3.1-8B",
             chunking_strategy: str = "fixed"
         ):
-        # self.llm = pipeline(
-        #     "text-generation", model=llm_name, model_kwargs={"torch_dtype": torch.bfloat16}, device_map="auto",
-        #     max_length = 1000
-        # )
-        self.llm = request_anthropic_api
+
+        self.llm = setup_local_llm(llm_name)
+        # self.llm = request_anthropic_api
 
         self.prompt = """
         <document> 
@@ -164,15 +179,13 @@ if __name__ == "__main__":
     The report emphasized the company's resilience and ability to navigate market challenges, reflecting positively on their financial health and future prospects.
     """.strip().replace("\n", "")
 
-
-    # llm_model_name = "microsoft/Phi-3.5-mini-instruct"
+    llm_model_name = "microsoft/Phi-3.5-mini-instruct"
     embedding_model_name = "jinaai/jina-embeddings-v2-small-en"
 
     embedding_model, has_instructions = load_model(embedding_model_name)
     embedding_tokenizer = AutoTokenizer.from_pretrained(embedding_model_name, trust_remote_code=True)
 
-
-    cr = ContextualRetrievalEmbedder(embedding_model, embedding_tokenizer, chunking_strategy="sentences")
+    cr = ContextualRetrievalEmbedder(embedding_model, embedding_tokenizer, llm_model_name, chunking_strategy="sentences")
     cr.run(text);
     cr_cosine_similarities = cr.query("What is ACME Corp's revenue growth for Q2 2023?")
 
