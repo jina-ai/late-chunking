@@ -89,7 +89,7 @@ If you find Late Chunking useful in your research, use can cite the paper [Late 
 ```
 @article{gunther2024late,
   title={Late Chunking: Contextual Chunk Embeddings Using Long-Context Embedding Models},
-  author={G{\"u}nther, Michael and Mohr, Isabelle and Wang, Bo and Xiao, Han},
+  author={G{\"u}nther, Michael and Mohr, Isabelle and Williams, Daniel J and Wang, Bo and Xiao, Han},
   journal={arXiv preprint arXiv:2409.04701},
   year={2024}
 }
