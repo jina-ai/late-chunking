@@ -22,6 +22,11 @@ DEFAULT_TRUNCATE_MAX_LENGTH = None
     help='The name of the model to use.',
 )
 @click.option(
+    '--model-weights',
+    default=None,
+    help='The path to the model weights to use, e.g. in case of finetuning.',
+)
+@click.option(
     '--strategy',
     default=DEFAULT_CHUNKING_STRATEGY,
     help='The chunking strategy to be applied.',
@@ -70,6 +75,7 @@ DEFAULT_TRUNCATE_MAX_LENGTH = None
 )
 def main(
     model_name,
+    model_weights,
     strategy,
     task_name,
     eval_split,
@@ -91,7 +97,7 @@ def main(
             f'Truncation is disabled because Long Late Chunking algorithm is enabled.'
         )
 
-    model, has_instructions = load_model(model_name)
+    model, has_instructions = load_model(model_name, model_weights)
 
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 

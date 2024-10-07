@@ -1,3 +1,4 @@
+import os
 from typing import List, Optional, Union
 
 import torch
@@ -138,7 +139,7 @@ def remove_unsupported_kwargs(original_encode):
     return wrapper
 
 
-def load_model(model_name, **model_kwargs):
+def load_model(model_name, model_weights=None, **model_kwargs):
     if model_name in MODEL_WRAPPERS:
         model = MODEL_WRAPPERS[model_name](model_name, **model_kwargs)
         if hasattr(MODEL_WRAPPERS[model_name], 'has_instructions'):
@@ -148,6 +149,9 @@ def load_model(model_name, **model_kwargs):
     else:
         model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
         has_instructions = False
+
+    if model_weights and os.path.exists(model_weights):
+        model._model.load_state_dict(torch.load(model_weights, device=model.device))
 
     # encode functions of various models do not support all sentence transformers kwargs parameter
     if model_name in MODELS_WITHOUT_PROMPT_NAME_ARG:
