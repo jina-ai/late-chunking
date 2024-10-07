@@ -106,26 +106,35 @@ class AbsTaskChunkedRetrieval(AbsTask):
 
     def _truncate_documents(self, corpus):
         for k, v in corpus.items():
+            title_tokens = 0
             if 'title' in v:
-                raise NotImplementedError(
-                    'Currently truncation is only implemented for documents without titles'
+                tokens = self.tokenizer(
+                    v['title'] + ' ',
+                    return_offsets_mapping=True,
+                    max_length=self.truncate_max_length,
                 )
+                title_tokens = len(tokens.input_ids)
             tokens = self.tokenizer(
                 v['text'],
                 return_offsets_mapping=True,
-                max_length=self.truncate_max_length,
+                max_length=self.truncate_max_length - title_tokens,
             )
             last_token_span = tokens.offset_mapping[-2]
             v['text'] = v['text'][: last_token_span[1]]
         return corpus
 
     def _embed_with_overlap(self, model, model_inputs):
-        
+
         len_tokens = len(model_inputs["input_ids"][0])
-        
+
         if len_tokens > self.long_late_chunking_embed_size:
             indices = []
-            for i in range(0, len_tokens, self.long_late_chunking_embed_size - self.long_late_chunking_overlap_size):
+            for i in range(
+                0,
+                len_tokens,
+                self.long_late_chunking_embed_size
+                - self.long_late_chunking_overlap_size,
+            ):
                 start = i
                 end = min(i + self.long_late_chunking_embed_size, len_tokens)
                 indices.append((start, end))
@@ -138,10 +147,12 @@ class AbsTaskChunkedRetrieval(AbsTask):
             batch_inputs = {k: v[:, start:end] for k, v in model_inputs.items()}
 
             with torch.no_grad():
-                model_output = model(**batch_inputs)       
+                model_output = model(**batch_inputs)
 
             if start > 0:
-                outputs.append(model_output[0][:, self.long_late_chunking_overlap_size:])
+                outputs.append(
+                    model_output[0][:, self.long_late_chunking_overlap_size :]
+                )
             else:
                 outputs.append(model_output[0])
 
@@ -227,10 +238,12 @@ class AbsTaskChunkedRetrieval(AbsTask):
                         output_embs = chunked_pooling(
                             [model_outputs], annotations, max_length=None
                         )
-                    else: # truncation
+                    else:  # truncation
                         model_outputs = model(**model_inputs)
                         output_embs = chunked_pooling(
-                            model_outputs, annotations, max_length=self.truncate_max_length
+                            model_outputs,
+                            annotations,
+                            max_length=self.truncate_max_length,
                         )
                     corpus_embs.extend(output_embs)
 
