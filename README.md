@@ -1,6 +1,6 @@
 # Late Chunking of Short Chunks in Long-Context Embedding Models
 
-[**Blog post**](https://jina.ai/news/late-chunking-in-long-context-embedding-models) | [**ArXiv paper**](https://arxiv.org/abs/2409.04701)
+[**Blog part 1**](https://jina.ai/news/late-chunking-in-long-context-embedding-models) | [**Blog part 2**](https://jina.ai/news/what-late-chunking-really-is-and-what-its-not-part-ii/) | [**ArXiv paper**](https://arxiv.org/abs/2409.04701)
 
 For many applications, encoding a whole text document into a single embedding representation is not useful. Many applications require retrieving smaller parts of the text and dense vector-based information retrieval systems often perform better with smaller text segments because of the limited information capacity of embedding vectors.
 
@@ -89,7 +89,7 @@ If you find Late Chunking useful in your research, use can cite the paper [Late 
 ```
 @article{gunther2024late,
   title={Late Chunking: Contextual Chunk Embeddings Using Long-Context Embedding Models},
-  author={G{\"u}nther, Michael and Mohr, Isabelle and Wang, Bo and Xiao, Han},
+  author={G{\"u}nther, Michael and Mohr, Isabelle and Williams, Daniel J and Wang, Bo and Xiao, Han},
   journal={arXiv preprint arXiv:2409.04701},
   year={2024}
 }
