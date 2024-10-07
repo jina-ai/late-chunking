@@ -11,8 +11,8 @@ DEFAULT_CHUNK_SIZE = 256
 DEFAULT_N_SENTENCES = 5
 BATCH_SIZE = 1
 DEFAULT_LONG_LATE_CHUNKING_OVERLAP_SIZE = 256
-DEFAULT_LONG_LATE_CHUNKING_EMBED_SIZE = 0 # set to 0 to disable long late chunking
-DEFAULT_TRUNCATE_MAX_LENGTH = 8192
+DEFAULT_LONG_LATE_CHUNKING_EMBED_SIZE = 0  # set to 0 to disable long late chunking
+DEFAULT_TRUNCATE_MAX_LENGTH = None
 
 
 @click.command()
@@ -60,13 +60,13 @@ DEFAULT_TRUNCATE_MAX_LENGTH = 8192
     '--long-late-chunking-embed-size',
     default=DEFAULT_LONG_LATE_CHUNKING_EMBED_SIZE,
     type=int,
-    help='Token length of the embeddings that come before/after soft boundaries (i.e. overlapping embeddings). Above zero, overlap is used between neighbouring embeddings.',
+    help='Number of tokens per chunk for fixed strategy.',
 )
 @click.option(
     '--long-late-chunking-overlap-size',
     default=DEFAULT_LONG_LATE_CHUNKING_OVERLAP_SIZE,
     type=int,
-    help='Number of tokens per chunk for fixed strategy.',
+    help='Token length of the embeddings that come before/after soft boundaries (i.e. overlapping embeddings). Above zero, overlap is used between neighbouring embeddings.',
 )
 def main(
     model_name,
@@ -78,17 +78,19 @@ def main(
     chunk_size,
     n_sentences,
     long_late_chunking_embed_size,
-    long_late_chunking_overlap_size
+    long_late_chunking_overlap_size,
 ):
     try:
         task_cls = globals()[task_name]
     except:
         raise ValueError(f'Unknown task name: {task_name}')
-    
+
     if truncate_max_length is not None and (long_late_chunking_embed_size > 0):
         truncate_max_length = None
-        print(f'Truncation is disabled because Long Late Chunking algorithm is enabled.')
-    
+        print(
+            f'Truncation is disabled because Long Late Chunking algorithm is enabled.'
+        )
+
     model, has_instructions = load_model(model_name)
 
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
