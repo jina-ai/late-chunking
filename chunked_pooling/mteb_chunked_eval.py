@@ -51,7 +51,9 @@ class AbsTaskChunkedRetrieval(AbsTask):
             'n_sentences': n_sentences,
             'embedding_model_name': embedding_model_name,
         }
-        self.truncate_max_length = truncate_max_length
+        self.truncate_max_length = (
+            truncate_max_length if truncate_max_length > 0 else None
+        )
 
         self.long_late_chunking_embed_size = long_late_chunking_embed_size
         self.long_late_chunking_overlap_size = long_late_chunking_overlap_size
@@ -124,7 +126,6 @@ class AbsTaskChunkedRetrieval(AbsTask):
         return corpus
 
     def _embed_with_overlap(self, model, model_inputs):
-
         len_tokens = len(model_inputs["input_ids"][0])
 
         if len_tokens > self.long_late_chunking_embed_size:
@@ -143,7 +144,6 @@ class AbsTaskChunkedRetrieval(AbsTask):
 
         outputs = []
         for start, end in indices:
-
             batch_inputs = {k: v[:, start:end] for k, v in model_inputs.items()}
 
             with torch.no_grad():
